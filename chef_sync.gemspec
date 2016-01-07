@@ -8,8 +8,8 @@ Gem::Specification.new do |spec|
   spec.version       = ChefSync::VERSION
   spec.authors       = ["Rachel King"]
   spec.email         = ["rachel@cozy.co"]
-  spec.summary       = %q{TODO: Write a short summary. Required.}
-  spec.description   = %q{TODO: Write a longer description. Optional.}
+  spec.summary       = %q{Sync a monolithic chef repo to a chef server.}
+  spec.description   = %q{Sync a monolithic chef repo to a chef server.}
   spec.homepage      = ""
   spec.license       = "MIT"
 
@@ -24,5 +24,5 @@ Gem::Specification.new do |spec|
 
   spec.add_runtime_dependency "chef"
   spec.add_runtime_dependency "ridley"
-  spec.add_runtime_dependency "knife/api"
+  spec.add_runtime_dependency "knife-api"
 end

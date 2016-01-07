@@ -4,7 +4,8 @@ require 'chef'
 require 'ridley'
 require 'knife/api'
 
-Ridley::Logging.logger.level = Logger.const_get('ERROR')
+Ridley::Logging.logger.level = Logger.const_get('FATAL')
+Celluloid.shutdown_timeout = 0.1
 
 module ChefSync
 	
