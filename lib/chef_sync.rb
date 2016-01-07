@@ -11,11 +11,7 @@ module ChefSync
 	
 	def sync
 		resources = [Role, Environment, DataBag, Cookbook]
-		output = {}
-		resources.each do |r|
-			output[r.resource_type] = r.sync
-		end
-		return output
+		return resources.each_with_object({}) {|r, output| output[r.resource_type] = r.sync}
 	end
 	module_function :sync
 
