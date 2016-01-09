@@ -5,13 +5,4 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 require 'chef_sync'
 
-ChefSync.sync.each do |resource, response|
-	total_resources, messages = response
-	update_count = messages.nil? ? 0 : messages.count
-	puts "#{update_count}/#{total_resources} #{resource}s need updating."
-	if messages
-		messages.each do |m|
-			puts m
-		end
-	end
-end
+ChefSync.new.print_output
