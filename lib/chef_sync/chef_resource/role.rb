@@ -1,4 +1,4 @@
-class Role < ChefResource
+class Role < ChefSync::ChefResource
 
 	@resource_type = 'role'
 

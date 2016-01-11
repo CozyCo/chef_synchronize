@@ -1,4 +1,4 @@
-class Environment < ChefResource
+class Environment < ChefSync::ChefResource
 
 	@resource_type = 'environment'
 

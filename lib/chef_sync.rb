@@ -1,13 +1,11 @@
 #!/usr/bin/env ruby
-require 'chef_sync/chef_resource'
-require 'chef_sync/chef_resource/cookbook'
-require 'chef_sync/chef_resource/data_bag'
-require 'chef_sync/chef_resource/environment'
-require 'chef_sync/chef_resource/role'
-
-Ridley::Logging.logger.level = Logger.const_get('ERROR')
-
 class ChefSync
+
+	require 'chef_sync/chef_resource'
+	require 'chef_sync/chef_resource/cookbook'
+	require 'chef_sync/chef_resource/data_bag'
+	require 'chef_sync/chef_resource/environment'
+	require 'chef_sync/chef_resource/role'
 
 	RESOURCE_TYPES = [Role, Environment, DataBag, Cookbook]
 

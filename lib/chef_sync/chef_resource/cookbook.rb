@@ -1,7 +1,9 @@
 require 'chef'
 require 'ridley'
 
-class Cookbook < ChefResource
+Ridley::Logging.logger.level = Logger.const_get('ERROR')
+
+class Cookbook < ChefSync::ChefResource
 
 	@resource_type = 'cookbook'
 
@@ -56,14 +58,14 @@ class Cookbook < ChefResource
 		remote_ver = self.remote_version_number
 
 		case
+		when !remote_ver
+			return "#{self.resource_path} is new and should be uploaded to the chef server."
 		when local_ver < remote_ver
 			return "Warning: remote #{self.resource_path} is newer than the local version."
 		when local_ver == remote_ver
 			return self.compare_cookbook_file_checksums
 		when local_ver > remote_ver
 			return "#{self.resource_path} should be uploaded to the chef server."
-		when !remote_ver
-			return "#{self.resource_path} is new and should be uploaded to the chef server."
 		end
 	end
 
