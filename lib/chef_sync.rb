@@ -14,15 +14,9 @@ class ChefSync
 	end
 
 	def print_output
-		self.required_actions.each do |resource, response|
-			total_resources, messages = response
-			update_count = messages.nil? ? 0 : messages.count
-			puts "#{update_count}/#{total_resources} #{resource}s need updating."
-			if messages
-				messages.each do |m|
-					puts m
-				end
-			end
+		self.required_actions.each do |resource, responses|
+			puts "#{resource}:"
+			puts responses
 		end
 	end
 

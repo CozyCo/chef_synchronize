@@ -7,25 +7,28 @@ class ChefSync
 		#Need to extend Chef::Knife::API in this class because knife_capture is top-level.
 		extend Chef::Knife::API
 
-		class << self; attr_accessor :resource_type end
+		class << self; attr_reader :resource_type end
 		@resource_type = ''
 
 		attr_reader :name
+		attr_accessor :required_action
+		attr_accessor :detailed_action_list
 
 		def initialize(name)
 			@name = name
+			@required_action = :none
+			@detailed_action_list = []
 		end
 
 		def self.sync
 			local_resource_list = self.get_local_resource_list
-			notifications = []
+			all_required_actions = {}
+
 			local_resource_list.each do |resource_name|
 				resource = self.new(resource_name)
-				response = resource.compare_local_and_remote_versions
-				notifications << response if response
+				all_required_actions[resource.name] = resource.compare_local_and_remote_versions
 			end
-
-			return [local_resource_list.length, notifications]
+			return all_required_actions
 		end
 
 		def self.get_local_resource_list
@@ -94,11 +97,13 @@ class ChefSync
 			remote_resource = self.get_remote_resource
 
 			case
-			when local_resource != remote_resource
-				return "#{self.resource_path} should be uploaded to the chef server."
 			when !remote_resource
-				return "#{self.resource_path} is new and should be uploaded to the chef server."
+				self.required_action = :create
+			when local_resource != remote_resource
+				self.required_action = :update
 			end
+
+			return self.required_action
 		end
 
 	end

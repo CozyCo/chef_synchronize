@@ -20,14 +20,13 @@ class Cookbook < ChefSync::ChefResource
 	def self.sync
 		local_cookbook_list = self.get_local_resource_list
 		remote_cookbook_list = self.get_remote_resource_list
-		notifications = []
+		all_required_actions = {}
 
 		local_cookbook_list.each do |cb, ver|
 			resource = self.new(cb, ver, remote_cookbook_list[cb])
-			response = resource.compare_local_and_remote_versions
-			notifications << response if response
+			all_required_actions[resource.name] = resource.compare_local_and_remote_versions
 		end
-		return [local_cookbook_list.length, notifications]
+		return all_required_actions
 	end
 
 	def self.get_remote_resource_list
@@ -59,29 +58,33 @@ class Cookbook < ChefSync::ChefResource
 
 		case
 		when !remote_ver
-			return "#{self.resource_path} is new and should be uploaded to the chef server."
+			self.required_action = :create
 		when local_ver < remote_ver
-			return "Warning: remote #{self.resource_path} is newer than the local version."
+			self.required_action = :error
 		when local_ver == remote_ver
-			return self.compare_cookbook_file_checksums
+			self.required_action = :update unless self.compare_cookbook_files.empty?
 		when local_ver > remote_ver
-			return "#{self.resource_path} should be uploaded to the chef server."
+			self.required_action = :update
 		end
+
+		return self.required_action
 	end
 
-	def compare_cookbook_file_checksums
+	def compare_cookbook_files
 		remote_cookbook_files = self.get_remote_resource
 
 		remote_cookbook_files.each do |remote_file|
 			local_file_path = "#{self.resource_path}/#{remote_file['path']}"
+			file_action = {:path => local_file_path, :action => :none}
 			begin
 				local_file_checksum = Chef::CookbookVersion.checksum_cookbook_file(File.open(local_file_path))
-				message = "Warning: local file #{local_file_path} has changed without a cookbook version change." unless local_file_checksum == remote_file['checksum']
-				return message
+				file_action[:action] = :update unless local_file_checksum == remote_file['checksum']
 			rescue Errno::ENOENT => e
-				return "Warning: remote file #{local_file_path} doesn't exist locally."
+				file_action[:action] = :error
 			end
+			self.detailed_action_list << file_action if file_action[:action] != :none
 		end
+		return self.detailed_action_list
 	end
 
 end
