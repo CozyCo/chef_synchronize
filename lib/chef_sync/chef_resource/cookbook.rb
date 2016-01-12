@@ -9,10 +9,12 @@ class Cookbook < ChefSync::ChefResource
 
 	attr_reader :local_version_number
 	attr_reader :remote_version_number
+	attr_accessor :detailed_action_list
 
 	def initialize(name, local_version_number, remote_version_number)
 		@local_version_number = local_version_number
 		@remote_version_number = remote_version_number
+		@detailed_action_list = []
 
 		super(name)
 	end

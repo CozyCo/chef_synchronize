@@ -12,12 +12,10 @@ class ChefSync
 
 		attr_reader :name
 		attr_accessor :required_action
-		attr_accessor :detailed_action_list
 
 		def initialize(name)
 			@name = name
 			@required_action = :none
-			@detailed_action_list = []
 		end
 
 		def self.sync

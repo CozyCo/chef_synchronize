@@ -43,9 +43,9 @@ describe 'chef_sync' do
 	describe 'ChefSync::Role' do
 		context 'when the local and remote are the same' do
 			it 'has no required action' do
-				role = ChefSync::Role.new('potato')
-				allow(role).to receive(:get_local_resource).and_return('mushroom')
-				allow(role).to receive(:get_remote_resource).and_return('mushroom')
+				role = ChefSync::Role.new('rainbows')
+				allow(role).to receive(:get_local_resource).and_return('butterflies')
+				allow(role).to receive(:get_remote_resource).and_return('butterflies')
 
 				action = role.compare_local_and_remote_versions
 				expect(action).to be_a(Symbol)
@@ -55,9 +55,9 @@ describe 'chef_sync' do
 
 		context 'when the local and remote are different' do
 			it 'needs to be updated' do
-				role = ChefSync::Role.new('potato')
-				allow(role).to receive(:get_local_resource).and_return('mushroom')
-				allow(role).to receive(:get_remote_resource).and_return('snake')
+				role = ChefSync::Role.new('rainbows')
+				allow(role).to receive(:get_local_resource).and_return('butterflies')
+				allow(role).to receive(:get_remote_resource).and_return('unicorns')
 
 				action = role.compare_local_and_remote_versions
 				expect(action).to be_a(Symbol)
@@ -67,8 +67,8 @@ describe 'chef_sync' do
 
 		context 'when the remote does not exist' do
 			it 'needs to be created' do
-				role = ChefSync::Role.new('potato')
-				allow(role).to receive(:get_local_resource).and_return('mushroom')
+				role = ChefSync::Role.new('rainbows')
+				allow(role).to receive(:get_local_resource).and_return('butterflies')
 				allow(role).to receive(:get_remote_resource).and_return(nil)
 
 				action = role.compare_local_and_remote_versions
@@ -78,16 +78,12 @@ describe 'chef_sync' do
 		end
 	end
 
-	describe 'ChefSync::DataBag' do
-		let(:dbag_list) {['rainbows']}
-
+	describe 'ChefSync::DataBagItem' do
 		context 'when local and remote files are the same' do
 			it 'has no required action' do
-				dbag = ChefSync::DataBag.new('potahto')
-				allow(dbag).to receive(:get_local_resource).and_return(dbag_list)
-				allow(dbag).to receive(:get_remote_resource).and_return(dbag_list)
-				allow(dbag).to receive(:get_local_dbag_file).and_return('unicorns')
-				allow(dbag).to receive(:get_remote_dbag_file).and_return('unicorns')
+				dbag = ChefSync::DataBagItem.new('potato', 'potahto')
+				allow(dbag).to receive(:get_local_resource).and_return('cheese')
+				allow(dbag).to receive(:get_remote_resource).and_return('cheese')
 
 				action = dbag.compare_local_and_remote_versions
 				expect(action).to be_a(Symbol)
@@ -97,11 +93,9 @@ describe 'chef_sync' do
 
 		context 'when local and remote files are different' do
 			it 'needs to be updated' do
-				dbag = ChefSync::DataBag.new('potahto')
-				allow(dbag).to receive(:get_local_resource).and_return(dbag_list)
-				allow(dbag).to receive(:get_remote_resource).and_return(dbag_list)
-				allow(dbag).to receive(:get_local_dbag_file).and_return('unicorns')
-				allow(dbag).to receive(:get_remote_dbag_file).and_return('butterflies')
+				dbag = ChefSync::DataBagItem.new('potato', 'potahto')
+				allow(dbag).to receive(:get_local_resource).and_return('cheese')
+				allow(dbag).to receive(:get_remote_resource).and_return('bacon')
 
 				action = dbag.compare_local_and_remote_versions
 				expect(action).to be_a(Symbol)
@@ -111,15 +105,13 @@ describe 'chef_sync' do
 
 		context 'when the remote does not exist' do
 			it 'needs to be created' do
-				dbag = ChefSync::DataBag.new('potahto')
-				allow(dbag).to receive(:get_local_resource).and_return(dbag_list)
-				allow(dbag).to receive(:get_remote_resource).and_return(dbag_list)
-				allow(dbag).to receive(:get_local_dbag_file).and_return('unicorns')
-				allow(dbag).to receive(:get_remote_dbag_file).and_return(nil)
+				dbag = ChefSync::DataBagItem.new('potato', 'potahto')
+				allow(dbag).to receive(:get_local_resource).and_return('cheese')
+				allow(dbag).to receive(:get_remote_resource).and_return(nil)
 
 				action = dbag.compare_local_and_remote_versions
 				expect(action).to be_a(Symbol)
-				expect(action).to eq(:update)
+				expect(action).to eq(:create)
 			end
 		end
 	end
