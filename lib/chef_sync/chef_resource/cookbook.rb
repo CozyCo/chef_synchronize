@@ -9,12 +9,12 @@ class Cookbook < ChefSync::ChefResource
 
 	attr_reader :local_version_number
 	attr_reader :remote_version_number
-	attr_accessor :detailed_action_list
+	attr_accessor :detailed_audit_log
 
 	def initialize(name, local_version_number, remote_version_number)
 		@local_version_number = local_version_number
 		@remote_version_number = remote_version_number
-		@detailed_action_list = []
+		@detailed_audit_log = []
 
 		super(name)
 	end
@@ -62,9 +62,9 @@ class Cookbook < ChefSync::ChefResource
 		when !remote_ver
 			self.required_action = :create
 		when local_ver < remote_ver
-			self.required_action = :error
+			self.required_action = :version_regressed
 		when local_ver == remote_ver
-			self.required_action = :update unless self.compare_cookbook_files.empty?
+			self.required_action = :version_changed unless self.compare_cookbook_files.empty?
 		when local_ver > remote_ver
 			self.required_action = :update
 		end
@@ -80,13 +80,13 @@ class Cookbook < ChefSync::ChefResource
 			file_action = {:path => local_file_path, :action => :none}
 			begin
 				local_file_checksum = Chef::CookbookVersion.checksum_cookbook_file(File.open(local_file_path))
-				file_action[:action] = :update unless local_file_checksum == remote_file['checksum']
+				file_action[:action] = :file_changed unless local_file_checksum == remote_file['checksum']
 			rescue Errno::ENOENT => e
-				file_action[:action] = :error
+				file_action[:action] = :file_missing
 			end
-			self.detailed_action_list << file_action if file_action[:action] != :none
+			self.detailed_audit_log << file_action if file_action[:action] != :none
 		end
-		return self.detailed_action_list
+		return self.detailed_audit_log
 	end
 
 end
