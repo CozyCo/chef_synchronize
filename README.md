@@ -1,13 +1,14 @@
 # ChefSync
 
-TODO: Write a gem description
+Sync a monolithic chef repo to a chef server. Currently only prints out changes
+without actually modifying anything on the chef server.
 
 ## Installation
 
-Add this line to your application's Gemfile:
+Add this line to your chef repo's Gemfile:
 
 ```ruby
-gem 'chef_sync'
+gem 'chef-sync'
 ```
 
 And then execute:
@@ -20,7 +21,10 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+From within your chef repo, execute the following line to see a list of
+unsynced changes:
+
+	$ bundle exec chef-sync
 
 ## Contributing
 
