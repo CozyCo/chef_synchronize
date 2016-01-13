@@ -10,12 +10,12 @@ class ChefSync
 	RESOURCE_TYPES = [Role, Environment, DataBagItem, Cookbook]
 
 	def required_actions
-		return RESOURCE_TYPES.each_with_object({}) {|r, output| output[r.resource_type] = r.sync}
+		return RESOURCE_TYPES.each_with_object({}) {|resource, output| output[resource] = resource.sync}
 	end
 
 	def print_output
 		self.required_actions.each do |resource, responses|
-			puts "#{resource}:"
+			puts "#{responses.count}/#{resource.resource_total} #{resource.resource_type}s changed."
 			puts responses
 		end
 	end

@@ -7,8 +7,16 @@ class ChefSync
 		#Need to extend Chef::Knife::API in this class because knife_capture is top-level.
 		extend Chef::Knife::API
 
+		REQUIRED_ACTION_LOG_SUMMARIES = {
+			:create => " was created.",
+			:update => " was updated."
+		}
+
 		class << self; attr_reader :resource_type end
 		@resource_type = ''
+
+		class << self; attr_accessor :resource_total end
+		@resource_total = 0
 
 		attr_reader :name
 		attr_accessor :required_action
@@ -20,13 +28,24 @@ class ChefSync
 
 		def self.sync
 			local_resource_list = self.get_local_resource_list
-			all_required_actions = {}
+			self.resource_total = local_resource_list.count
+			action_summary = {}
 
 			local_resource_list.each do |resource_name|
 				resource = self.new(resource_name)
-				all_required_actions[resource.name] = resource.compare_local_and_remote_versions
+				action_summary[resource] = resource.compare_local_and_remote_versions
 			end
-			return all_required_actions
+			return self.formatted_action_summary(action_summary)
+		end
+
+		def self.formatted_action_summary(action_summary)
+			changed_resources = action_summary.reject {|resource, action| action == :none}
+			output = []
+
+			changed_resources.each do |resource, action|
+				output << resource.resource_path + REQUIRED_ACTION_LOG_SUMMARIES[action]
+			end
+			return output
 		end
 
 		def self.get_local_resource_list

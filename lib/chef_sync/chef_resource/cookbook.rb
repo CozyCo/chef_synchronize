@@ -5,16 +5,28 @@ Ridley::Logging.logger.level = Logger.const_get('ERROR')
 
 class Cookbook < ChefSync::ChefResource
 
+	REQUIRED_ACTION_LOG_SUMMARIES = {
+		:create => " was created.",
+		:update => " was updated.",
+		:version_regressed => " is newer than the local version.",
+		:version_changed => " has changed without a version number increase."
+	}
+
+	FILE_AUDIT_LOG_SUMMARIES = {
+		:file_changed => " has changed.",
+		:file_missing => " does not exist locally."
+	}
+
 	@resource_type = 'cookbook'
 
 	attr_reader :local_version_number
 	attr_reader :remote_version_number
-	attr_accessor :detailed_audit_log
+	attr_accessor :file_audit_log
 
 	def initialize(name, local_version_number, remote_version_number)
 		@local_version_number = local_version_number
 		@remote_version_number = remote_version_number
-		@detailed_audit_log = []
+		@file_audit_log = {}
 
 		super(name)
 	end
@@ -22,13 +34,29 @@ class Cookbook < ChefSync::ChefResource
 	def self.sync
 		local_cookbook_list = self.get_local_resource_list
 		remote_cookbook_list = self.get_remote_resource_list
-		all_required_actions = {}
+		self.resource_total = local_cookbook_list.count
+		action_summary = {}
 
 		local_cookbook_list.each do |cb, ver|
 			resource = self.new(cb, ver, remote_cookbook_list[cb])
-			all_required_actions[resource.name] = resource.compare_local_and_remote_versions
+			action_summary[resource] = resource.compare_local_and_remote_versions
 		end
-		return all_required_actions
+		return self.formatted_action_summary(action_summary)
+	end
+
+	def self.formatted_action_summary(action_summary)
+		changed_resources = action_summary.reject {|resource, action| action == :none}
+		output = []
+
+		changed_resources.each do |resource, action|
+			output << resource.resource_path + REQUIRED_ACTION_LOG_SUMMARIES[action]
+			if action == :version_changed
+				resource.file_audit_log.each do |file, file_action|
+					output << file + FILE_AUDIT_LOG_SUMMARIES[file_action]
+				end
+			end
+		end
+		return output
 	end
 
 	def self.get_remote_resource_list
@@ -77,16 +105,14 @@ class Cookbook < ChefSync::ChefResource
 
 		remote_cookbook_files.each do |remote_file|
 			local_file_path = "#{self.resource_path}/#{remote_file['path']}"
-			file_action = {:path => local_file_path, :action => :none}
 			begin
 				local_file_checksum = Chef::CookbookVersion.checksum_cookbook_file(File.open(local_file_path))
-				file_action[:action] = :file_changed unless local_file_checksum == remote_file['checksum']
+				file_audit_log[local_file_path] = :file_changed unless local_file_checksum == remote_file['checksum']
 			rescue Errno::ENOENT => e
-				file_action[:action] = :file_missing
+				file_audit_log[local_file_path] = :file_missing
 			end
-			self.detailed_audit_log << file_action if file_action[:action] != :none
 		end
-		return self.detailed_audit_log
+		return self.file_audit_log
 	end
 
 end

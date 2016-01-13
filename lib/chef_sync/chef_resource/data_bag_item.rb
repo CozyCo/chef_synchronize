@@ -12,18 +12,18 @@ class DataBagItem < ChefSync::ChefResource
 
 	def self.sync
 		local_data_bag_list = self.get_local_resource_list
-		all_required_actions = {}
+		self.resource_total = local_data_bag_list.count
+		action_summary = {}
 
 		local_data_bag_list.each do |dbag|
 			local_dbag_items = self.get_local_resource_show_list(dbag)
 
 			local_dbag_items.each do |resource_name|
 				resource = self.new(dbag, resource_name)
-				file_location = "#{resource.name}/#{resource.file_name}"
-				all_required_actions[file_location] = resource.compare_local_and_remote_versions
+				action_summary[resource] = resource.compare_local_and_remote_versions
 			end
 		end
-		return all_required_actions
+		return self.formatted_action_summary(action_summary)
 	end
 
 	def self.get_local_resource_show_list(dbag)

@@ -125,8 +125,6 @@ describe 'chef_sync' do
 				action = cb.compare_local_and_remote_versions
 				expect(action).to be_a(Symbol)
 				expect(action).to eq(:none)
-
-				expect(cb.detailed_audit_log).to be_empty
 			end
 
 			it 'needs to be updated when a file is different' do
@@ -138,7 +136,7 @@ describe 'chef_sync' do
 				expect(action).to eq(:version_changed)
 			end
 
-			it 'needs to be created when a file does not exist locally' do
+			it 'needs to be updated when a file does not exist locally' do
 				cb = ChefSync::Cookbook.new('boyardee', '0.1.0', '0.1.0')
 				allow(cb).to receive(:compare_cookbook_files).and_return([{'meatballs' => :file_missing}])
 
