@@ -1,4 +1,4 @@
-class DataBagItem < ChefSync::ChefResource
+class ChefSync::DataBagItem < ChefSync::ChefResource
 
 	@resource_type = 'data_bag'
 
@@ -27,7 +27,7 @@ class DataBagItem < ChefSync::ChefResource
 	end
 
 	def self.get_local_resource_show_list(dbag)
-		return self.get_formatted_knife_data(:data_bag_show, [dbag, '-z'])
+		return ChefSync::Knife.capture(self.knife_show_resource_command, [dbag, '-z'])
 	end
 
 	def resource_path
@@ -39,15 +39,15 @@ class DataBagItem < ChefSync::ChefResource
 	end
 
 	def get_local_resource
-		return self.class.get_formatted_knife_data(self.class.knife_show_resource_command, [self.name, self.file_name, '-z'])
+		return ChefSync::Knife.capture(self.class.knife_show_resource_command, [self.name, self.file_name, '-z'])
 	end
 
 	def get_remote_resource
-		return self.class.get_formatted_knife_data(self.class.knife_show_resource_command, [self.name, self.file_name])
+		return ChefSync::Knife.capture(self.class.knife_show_resource_command, [self.name, self.file_name])
 	end
 
 	def update_remote_resource
-		return self.class.knife_upload(self.class.knife_upload_resource_command, [self.name, self.file_name_with_extension])
+		return ChefSync::Knife.upload(self.class.knife_upload_resource_command, [self.name, self.file_name_with_extension])
 	end
 
 	def compare_local_and_remote_versions

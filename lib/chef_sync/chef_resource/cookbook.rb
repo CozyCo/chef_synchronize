@@ -3,7 +3,7 @@ require 'ridley'
 
 Ridley::Logging.logger.level = Logger.const_get('ERROR')
 
-class Cookbook < ChefSync::ChefResource
+class ChefSync::Cookbook < ChefSync::ChefResource
 
 	CHANGE_LOG_SUMMARIES = {
 		:create => " was created.",
@@ -59,19 +59,21 @@ class Cookbook < ChefSync::ChefResource
 		return output
 	end
 
+	def self.get_local_resource_list
+		return self.format_knife_data(self.knife_list_resource_command, ['-z'])
+	end
+
 	def self.get_remote_resource_list
-		return self.get_formatted_knife_data(self.knife_list_resource_command)
+		return self.format_knife_data(self.knife_list_resource_command)
 	end
 
 	def self.knife_upload_resource_command
 		return "#{self.resource_type}_upload".to_sym
 	end
 
-	#Helper function to parse knife data.
-	def self.get_formatted_knife_data(command, args=[])
-		args << '-fj'
-		knife_output = self.fork_knife_capture(command, args)
-		parsed_output = self.parse_knife_capture_output(knife_output)
+	#Helper function to parse knife data into cookbooks.
+	def self.format_knife_data(command, args=[])
+		parsed_output = ChefSync::Knife.capture(command, args)
 		cookbooks = {}
 		parsed_output.each do |c|
 			cb, ver = c.gsub(/\s+/m, ' ').strip.split(" ")
@@ -87,8 +89,8 @@ class Cookbook < ChefSync::ChefResource
 		return remote_cookbook_files
 	end
 
-	def update_remote_resource
-		return self.class.knife_upload(self.class.knife_upload_resource_command, [self.name, '--freeze'])
+	def upload_remote_resource
+		return ChefSync::Knife.upload(self.class.knife_upload_resource_command, [self.name, '--freeze'])
 	end
 
 	def compare_cookbook_files

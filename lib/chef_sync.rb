@@ -6,6 +6,7 @@ class ChefSync
 	require 'chef_sync/chef_resource/data_bag_item'
 	require 'chef_sync/chef_resource/environment'
 	require 'chef_sync/chef_resource/role'
+	require 'chef_sync/knife'
 
 	RESOURCE_TYPES = [Role, Environment, DataBagItem, Cookbook]
 
