@@ -7,10 +7,14 @@ class ChefSync
 		#Need to extend Chef::Knife::API in this class because knife_capture is top-level.
 		extend Chef::Knife::API
 
-		REQUIRED_ACTION_LOG_SUMMARIES = {
+		CHANGE_LOG_SUMMARIES = {
 			:create => " was created.",
 			:update => " was updated."
 		}
+
+		ACTIONABLE_CHANGES = [:create, :update]
+
+		FILE_EXTENSION = ".json"
 
 		class << self; attr_reader :resource_type end
 		@resource_type = ''
@@ -19,21 +23,21 @@ class ChefSync
 		@resource_total = 0
 
 		attr_reader :name
-		attr_accessor :required_action
+		attr_accessor :change
 
 		def initialize(name)
 			@name = name
-			@required_action = :none
+			@change = :none
 		end
 
-		def self.sync
+		def self.sync(dryrun=false)
 			local_resource_list = self.get_local_resource_list
 			self.resource_total = local_resource_list.count
 			action_summary = {}
 
 			local_resource_list.each do |resource_name|
 				resource = self.new(resource_name)
-				action_summary[resource] = resource.compare_local_and_remote_versions
+				action_summary[resource] = resource.sync(dryrun)
 			end
 			return self.formatted_action_summary(action_summary)
 		end
@@ -43,7 +47,7 @@ class ChefSync
 			output = []
 
 			changed_resources.each do |resource, action|
-				output << resource.resource_path + REQUIRED_ACTION_LOG_SUMMARIES[action]
+				output << resource.resource_path + CHANGE_LOG_SUMMARIES[action]
 			end
 			return output
 		end
@@ -58,6 +62,10 @@ class ChefSync
 
 		def self.knife_show_resource_command
 			return "#{self.resource_type}_show".to_sym
+		end
+
+		def self.knife_upload_resource_command
+			return "#{self.resource_type}_from_file".to_sym
 		end
 
 		# This is the hackiest hack ever.
@@ -79,26 +87,45 @@ class ChefSync
 			writer.close
 			command_output = reader.read
 			Process.wait(pid)
-			output, stderr, status = Marshal.load(command_output)
+			return Marshal.load(command_output)
+		end
+
+		def self.parse_knife_capture_output(output)
+			stdout, sderr, status = output
 
 			begin
-				return JSON.parse(output)
+				return JSON.parse(stdout)
 			#Assuming here that a parser error means no data was returned and there was a knife error.
 			rescue JSON::ParserError => e
-				puts "Received error #{stderr} when trying to run knife_capture(#{command}, #{args})."
-				puts "STDOUT:\n" + output
-				puts "STDERR:\n" + stderr
+				puts "Received #{stderr} when trying to run knife_capture(#{command}, #{args})."
+				puts "STDERR: " + stderr
+				return stdout
 			end
 		end
 
 		#Helper function to parse knife data.
 		def self.get_formatted_knife_data(command, args=[])
 			args << '-fj'
-			return self.fork_knife_capture(command, args)
+			knife_output = self.fork_knife_capture(command, args)
+			return self.parse_knife_capture_output(knife_output)
+		end
+
+		def self.knife_upload(command, args=[])
+			knife_output = self.fork_knife_capture(command, args)
+			stdout, sderr, status = knife_output
+			unless status == 0
+				puts "Received #{stderr} when trying to run knife_capture(#{command}, #{args})."
+				puts "STDERR: " + stderr
+			end
+			return stdout
 		end
 
 		def resource_path
 			return "#{self.class.resource_type}s/#{self.name}"
+		end
+
+		def file_name_with_extension
+			return self.name + FILE_EXTENSION
 		end
 
 		def get_local_resource
@@ -109,18 +136,30 @@ class ChefSync
 			return self.class.get_formatted_knife_data(self.class.knife_show_resource_command, [self.name])
 		end
 
+		def update_remote_resource
+			return self.class.knife_upload(self.class.knife_upload_resource_command, [self.file_name_with_extension])
+		end
+
 		def compare_local_and_remote_versions
 			local_resource = self.get_local_resource
 			remote_resource = self.get_remote_resource
 
 			case
 			when !remote_resource
-				self.required_action = :create
+				self.change = :create
 			when local_resource != remote_resource
-				self.required_action = :update
+				self.change = :update
 			end
 
-			return self.required_action
+			return self.change
+		end
+
+		def sync(dryrun)
+			action = self.compare_local_and_remote_versions
+			if !dryrun and ACTIONABLE_CHANGES.include?(self.change)
+				self.update_remote_resource
+			end
+			return action
 		end
 
 	end

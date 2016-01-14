@@ -9,15 +9,21 @@ class ChefSync
 
 	RESOURCE_TYPES = [Role, Environment, DataBagItem, Cookbook]
 
-	def required_actions
-		return RESOURCE_TYPES.each_with_object({}) {|resource, output| output[resource] = resource.sync}
+	def run(dryrun=false)
+		output = RESOURCE_TYPES.each_with_object({}) {|resource, output| output[resource] = resource.sync(dryrun)}
+
+		return format_output(dryrun, output)
 	end
 
-	def print_output
-		self.required_actions.each do |resource, responses|
-			puts "#{responses.count}/#{resource.resource_total} #{resource.resource_type}s changed."
-			puts responses
+	def format_output(dryrun, output)
+		dryrun_message = "This was a dry run. Nothing has been updated on the chef server. "
+		dryrun ? summary = dryrun_message : summary = ""
+		log = [summary]
+		output.each do |resource, responses|
+			summary << "#{responses.count}/#{resource.resource_total} #{resource.resource_type}s have changed. "
+			log += responses
 		end
+		return log
 	end
 
 end

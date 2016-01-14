@@ -4,13 +4,13 @@ class DataBagItem < ChefSync::ChefResource
 
 	attr_reader :file_name
 
-	def initialize(name, file_name)
+	def initialize(dbag, file_name)
 		@file_name = file_name
 
-		super(name)
+		super(dbag)
 	end
 
-	def self.sync
+	def self.sync(dryrun=false)
 		local_data_bag_list = self.get_local_resource_list
 		self.resource_total = local_data_bag_list.count
 		action_summary = {}
@@ -20,7 +20,7 @@ class DataBagItem < ChefSync::ChefResource
 
 			local_dbag_items.each do |resource_name|
 				resource = self.new(dbag, resource_name)
-				action_summary[resource] = resource.compare_local_and_remote_versions
+				action_summary[resource] = resource.sync(dryrun)
 			end
 		end
 		return self.formatted_action_summary(action_summary)
@@ -34,6 +34,10 @@ class DataBagItem < ChefSync::ChefResource
 		return "#{self.class.resource_type}s/#{self.name}/#{self.file_name}"
 	end
 
+	def file_name_with_extension
+		return self.file_name + FILE_EXTENSION
+	end
+
 	def get_local_resource
 		return self.class.get_formatted_knife_data(self.class.knife_show_resource_command, [self.name, self.file_name, '-z'])
 	end
@@ -42,17 +46,21 @@ class DataBagItem < ChefSync::ChefResource
 		return self.class.get_formatted_knife_data(self.class.knife_show_resource_command, [self.name, self.file_name])
 	end
 
+	def update_remote_resource
+		return self.class.knife_upload(self.class.knife_upload_resource_command, [self.name, self.file_name_with_extension])
+	end
+
 	def compare_local_and_remote_versions
 		local_data_bag = self.get_local_resource
 		remote_data_bag = self.get_remote_resource
 
 		case
 		when !remote_data_bag
-			self.required_action = :create
+			self.change = :create
 		when local_data_bag != remote_data_bag
-			self.required_action = :update
+			self.change = :update
 		end
-		return self.required_action
+		return self.change
 	end
 
 end

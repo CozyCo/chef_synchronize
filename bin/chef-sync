@@ -1,8 +1,21 @@
 #!/usr/bin/env ruby
-
 lib = File.expand_path('../../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
+require 'optparse'
 require 'chef_sync'
 
-ChefSync.new.print_output
+options = {
+	dryrun: false
+}
+
+OptionParser.new do |opts|
+	opts.banner = 'Usage: chef-sync [options]'
+
+	opts.on('-d', '--dryrun',
+		'Print out changes without actually syncing to chef server		(default: false)') do |d|
+			options[:dryrun] = d
+		end
+end.parse!
+
+puts ChefSync.new.run(options[:dryrun])
