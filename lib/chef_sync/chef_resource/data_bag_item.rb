@@ -2,12 +2,12 @@ class ChefSync::DataBagItem < ChefSync::ChefResource
 
 	@resource_type = 'data_bag'
 
-	attr_reader :file_name
+	attr_reader :data_bag
 
 	def initialize(dbag, file_name)
-		@file_name = file_name
+		@data_bag = dbag
 
-		super(dbag)
+		super(file_name)
 	end
 
 	def self.sync(dryrun=false)
@@ -26,41 +26,24 @@ class ChefSync::DataBagItem < ChefSync::ChefResource
 		return self.formatted_action_summary(action_summary)
 	end
 
-	def self.get_local_resource_show_list(dbag)
-		return ChefSync::Knife.capture(self.knife_show_resource_command, [dbag, '-z'])
+	def self.get_local_resource_show_list(data_bag)
+		return ChefSync::Knife.capture(self.knife_show_resource_command, [data_bag, '-z'])
 	end
 
 	def resource_path
-		return "#{self.class.resource_type}s/#{self.name}/#{self.file_name}"
-	end
-
-	def file_name_with_extension
-		return self.file_name + FILE_EXTENSION
+		return "#{self.class.resource_type}s/#{self.data_bag}/#{self.name}"
 	end
 
 	def get_local_resource
-		return ChefSync::Knife.capture(self.class.knife_show_resource_command, [self.name, self.file_name, '-z'])
+		return ChefSync::Knife.capture(self.class.knife_show_resource_command, [self.data_bag, self.name, '-z'])
 	end
 
 	def get_remote_resource
-		return ChefSync::Knife.capture(self.class.knife_show_resource_command, [self.name, self.file_name])
+		return ChefSync::Knife.capture(self.class.knife_show_resource_command, [self.data_bag, self.name])
 	end
 
 	def update_remote_resource
-		return ChefSync::Knife.upload(self.class.knife_upload_resource_command, [self.name, self.file_name_with_extension])
-	end
-
-	def compare_local_and_remote_versions
-		local_data_bag = self.get_local_resource
-		remote_data_bag = self.get_remote_resource
-
-		case
-		when !remote_data_bag
-			self.change = :create
-		when local_data_bag != remote_data_bag
-			self.change = :update
-		end
-		return self.change
+		return ChefSync::Knife.upload(self.class.knife_upload_resource_command, [self.data_bag, self.file_name_with_extension])
 	end
 
 end
