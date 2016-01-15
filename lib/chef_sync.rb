@@ -10,7 +10,7 @@ class ChefSync
 
 	RESOURCE_TYPES = [Role, Environment, DataBagItem, Cookbook]
 
-	def run(dryrun=false)
+	def run(dryrun=true)
 		output = RESOURCE_TYPES.each_with_object({}) {|resource, output| output[resource] = resource.sync(dryrun)}
 
 		return format_output(dryrun, output)

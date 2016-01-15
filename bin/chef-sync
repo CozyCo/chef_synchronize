@@ -6,14 +6,14 @@ require 'optparse'
 require 'chef_sync'
 
 options = {
-	dryrun: false
+	dryrun: true
 }
 
 OptionParser.new do |opts|
 	opts.banner = 'Usage: chef-sync [options]'
 
-	opts.on('-d', '--dryrun',
-		'Print out changes without actually syncing to chef server		(default: false)') do |d|
+	opts.on('-d', '--[no-]dryrun',
+		'Print out changes without actually syncing to chef server		(default: true)') do |d|
 			options[:dryrun] = d
 		end
 end.parse!
