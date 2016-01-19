@@ -23,23 +23,26 @@ class ChefSync::Cookbook < ChefSync::ChefResource
 	attr_reader :remote_version_number
 	attr_accessor :file_change_log
 
-	def initialize(name, local_version_number, remote_version_number)
+	def initialize(local_version_number, remote_version_number, *args)
 		@local_version_number = local_version_number
 		@remote_version_number = remote_version_number
 		@file_change_log = {}
 
-		super(name)
+		super(*args)
 	end
 
-	def self.sync(dryrun=false)
-		local_cookbook_list = self.get_local_resource_list
-		remote_cookbook_list = self.get_remote_resource_list
+	def self.sync(dryrun)
+		local_knife = ChefSync::Knife.new(self.resource_type, :local)
+		remote_knife = ChefSync::Knife.new(self.resource_type, :remote)
+
+		local_cookbook_list = self.get_resource_list(local_knife)
+		remote_cookbook_list = self.get_resource_list(remote_knife)
 		self.resource_total = local_cookbook_list.count
 		action_summary = {}
 
 		local_cookbook_list.each do |cb, ver|
-			resource = self.new(cb, ver, remote_cookbook_list[cb])
-			action_summary[resource] = resource.sync(dryrun)
+			resource = self.new(ver, remote_cookbook_list[cb], cb, dryrun, local_knife, remote_knife)
+			action_summary[resource] = resource.sync
 		end
 		return self.formatted_action_summary(action_summary)
 	end
@@ -59,23 +62,14 @@ class ChefSync::Cookbook < ChefSync::ChefResource
 		return output
 	end
 
-	def self.get_local_resource_list
-		return self.format_knife_data(self.knife_list_resource_command, ['-z'])
+	def self.get_resource_list(knife)
+		return self.format_knife_data(knife.list)
 	end
 
-	def self.get_remote_resource_list
-		return self.format_knife_data(self.knife_list_resource_command)
-	end
-
-	def self.knife_upload_resource_command
-		return "#{self.resource_type}_upload".to_sym
-	end
-
-	#Helper function to parse knife data into cookbooks.
-	def self.format_knife_data(command, args=[])
-		parsed_output = ChefSync::Knife.capture(command, args)
+	#Helper function to parse knife list data into cookbooks.
+	def self.format_knife_data(knife_output)
 		cookbooks = {}
-		parsed_output.each do |c|
+		knife_output.each do |c|
 			cb, ver = c.gsub(/\s+/m, ' ').strip.split(" ")
 			cookbooks[cb] = ver
 		end
@@ -89,8 +83,8 @@ class ChefSync::Cookbook < ChefSync::ChefResource
 		return remote_cookbook_files
 	end
 
-	def upload_remote_resource
-		return ChefSync::Knife.upload(self.class.knife_upload_resource_command, [self.name, '--freeze'])
+	def upload_resource
+		return self.remote_knife.upload(self.name, '--freeze')
 	end
 
 	def compare_cookbook_files

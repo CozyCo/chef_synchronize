@@ -7,6 +7,23 @@ class ChefSync
 		#Need to extend Chef::Knife::API in this class because knife_capture is top-level.
 		extend Chef::Knife::API
 
+		attr_reader :list_command
+		attr_reader :show_command
+		attr_reader :upload_command
+
+		def initialize(chef_resource, mode)
+			@list_command = "#{chef_resource}_list".to_sym
+			@show_command = "#{chef_resource}_show".to_sym
+
+			if chef_resource == 'cookbook'
+				@upload_command = "#{chef_resource}_upload".to_sym
+			else
+				@upload_command = "#{chef_resource}_from_file".to_sym
+			end
+
+			@mode = mode
+		end
+
 		# This is the hackiest hack ever.
 		# Chef::Knife keeps a persistent option state -- if you add
 		# an option like `--local-mode` once, it will be used on
@@ -14,6 +31,7 @@ class ChefSync
 		# figure out how to change this behavior (lost many hours trying),
 		# but until then, we fork a new process for `knife_capture` so
 		# that we do not taint our global state.
+		# This has to stay a class method for the same reason.
 		def self.fork_knife_capture(command, args)
 			reader, writer = IO.pipe
 
@@ -29,31 +47,48 @@ class ChefSync
 			return Marshal.load(command_output)
 		end
 
-		def self.parse_output(output)
-			stdout, sderr, status = output
+		# This instance method exists so we can mock out Knife's output for
+		# individual instances when testing.
+		def fork_knife_capture(command, args)
+			return self.class.fork_knife_capture(command, args)
+		end
+
+		def local?
+			return @mode == :local
+		end
+
+		def parse_output(command, args, output)
+			stdout, stderr, status = output
 
 			begin
 				return JSON.parse(stdout)
 			#Assuming here that a parser error means no data was returned and there was a knife error.
 			rescue JSON::ParserError => e
-				puts "Received #{stderr} when trying to run knife_capture(#{command}, #{args})."
-				puts "STDERR: " + stderr
+				puts "Received STDERR #{stderr} when trying to run knife_capture(#{command}, #{args})."
 				return stdout
 			end
 		end
 
-		def self.capture(command, args=[])
+		def capture_output(command, args)
 			args << '-fj'
+			args << '-z' if self.local?
 			knife_output = self.fork_knife_capture(command, args)
-			return self.parse_output(knife_output)
+			return self.parse_output(command, args, knife_output)
 		end
 
-		def self.upload(command, args=[])
-			knife_output = self.fork_knife_capture(command, args)
-			stdout, sderr, status = knife_output
+		def list(*args)
+			return self.capture_output(self.list_command, args)
+		end
+
+		def show(*args)
+			return self.capture_output(self.show_command, args)
+		end
+
+		def upload(*args)
+			knife_output = self.fork_knife_capture(self.upload_command, args)
+			stdout, stderr, status = knife_output
 			unless status == 0
-				puts "Received #{stderr} when trying to run knife_capture(#{command}, #{args})."
-				puts "STDERR: " + stderr
+				puts "Received STDERR #{stderr} when trying to run knife_capture(#{self.upload_command}, #{args})."
 			end
 			return stdout
 		end

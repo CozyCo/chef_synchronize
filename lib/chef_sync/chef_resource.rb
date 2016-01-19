@@ -17,21 +17,35 @@ class ChefSync
 		@resource_total = 0
 
 		attr_reader :name
+		attr_reader :name_with_extension
+
 		attr_accessor :change
 
-		def initialize(name)
+		attr_reader :local_knife
+		attr_reader :remote_knife
+
+		def initialize(name, dryrun, local_knife, remote_knife)
 			@name = name
+			@name_with_extension = name + FILE_EXTENSION
+
 			@change = :none
+			@dryrun = dryrun
+
+			@local_knife = local_knife
+			@remote_knife = remote_knife
 		end
 
-		def self.sync(dryrun=false)
-			local_resource_list = self.get_local_resource_list
+		def self.sync(dryrun)
+			local_knife = ChefSync::Knife.new(self.resource_type, :local)
+			remote_knife = ChefSync::Knife.new(self.resource_type, :remote)
+
+			local_resource_list = local_knife.list
 			self.resource_total = local_resource_list.count
 			action_summary = {}
 
 			local_resource_list.each do |resource_name|
-				resource = self.new(resource_name)
-				action_summary[resource] = resource.sync(dryrun)
+				resource = self.new(resource_name, dryrun, local_knife, remote_knife)
+				action_summary[resource] = resource.sync
 			end
 			return self.formatted_action_summary(action_summary)
 		end
@@ -46,48 +60,28 @@ class ChefSync
 			return output
 		end
 
-		def self.get_local_resource_list
-			return ChefSync::Knife.capture(self.knife_list_resource_command, ['-z'])
-		end
-
-		def self.knife_list_resource_command
-			return "#{self.resource_type}_list".to_sym
-		end
-
-		def self.knife_show_resource_command
-			return "#{self.resource_type}_show".to_sym
-		end
-
-		def self.knife_upload_resource_command
-			return "#{self.resource_type}_from_file".to_sym
+		def dryrun?
+			return @dryrun == true
 		end
 
 		def resource_path
 			return "#{self.class.resource_type}s/#{self.name}"
 		end
 
-		def file_name_with_extension
-			return self.name + FILE_EXTENSION
+		def get_resource(knife)
+			return knife.show(self.name)
 		end
 
-		def get_local_resource
-			return ChefSync::Knife.capture(self.class.knife_show_resource_command, [self.name, '-z'])
-		end
-
-		def get_remote_resource
-			return ChefSync::Knife.capture(self.class.knife_show_resource_command, [self.name])
-		end
-
-		def upload_remote_resource
-			return ChefSync::Knife.upload(self.class.knife_upload_resource_command, [self.file_name_with_extension])
+		def upload_resource
+			return self.remote_knife.upload(self.name_with_extension)
 		end
 
 		def compare_local_and_remote_versions
-			local_resource = self.get_local_resource
-			remote_resource = self.get_remote_resource
+			local_resource = self.get_resource(self.local_knife)
+			remote_resource = self.get_resource(self.remote_knife)
 
 			case
-			when !remote_resource
+			when remote_resource.empty?
 				self.change = :create
 			when local_resource != remote_resource
 				self.change = :update
@@ -96,10 +90,10 @@ class ChefSync
 			return self.change
 		end
 
-		def sync(dryrun)
+		def sync
 			action = self.compare_local_and_remote_versions
-			if !dryrun and ACTIONABLE_CHANGES.include?(self.change)
-				self.upload_remote_resource
+			if self.dryrun? and ACTIONABLE_CHANGES.include?(self.change)
+				self.upload_resource
 			end
 			return action
 		end
