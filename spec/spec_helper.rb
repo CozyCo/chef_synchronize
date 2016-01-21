@@ -2,6 +2,7 @@ require 'chef_sync'
 
 require 'json'
 require 'knife/api'
+require 'rspec'
 
 class ChefSync
 	class KnifeMock < Knife

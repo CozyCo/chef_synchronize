@@ -1,9 +1,12 @@
 require_relative '../../spec_helper'
+require_relative '../chef_resource_shared_behaviors'
 
 describe 'ChefSync::Environment' do
 
 	before(:all) do
-		@local_env = {
+		@resource_class = ChefSync::Environment
+
+		@local_resource = {
 			'name': 'fake_environment',
 			'default_attributes': {},
 			'override_attributes': {},
@@ -13,48 +16,11 @@ describe 'ChefSync::Environment' do
 			'chef_type': 'environment'
 		}
 
-		ChefSync::Environment.local_knife = ChefSync::KnifeMock.new('environment', :local)
-		ChefSync::Environment.local_knife.set_success(@local_env)
-		ChefSync::Environment.remote_knife = ChefSync::KnifeMock.new('environment', :remote)
-		ChefSync::Environment.dryrun = false
+		@remote_resource = @local_resource.merge({'description' => 'This is a different fake environment.'})
 	end
 
-	context 'when the local and remote are the same' do
-		it 'has no required action' do
-			ChefSync::Environment.remote_knife.set_success(@local_env)
+	let(:init_args) { {name: 'fake_environment'} }
 
-			env = ChefSync::Environment.new(name: 'fake_env')
-
-			action = env.compare_local_and_remote_versions
-			expect(action).to be_a(Symbol)
-			expect(action).to eq(:none)
-		end
-	end
-
-	context 'when the local and remote are different' do
-		it 'needs to be updated' do
-			remote_env = @local_env.merge({'description' => 'This is a different fake environment.'})
-			ChefSync::Environment.remote_knife.set_success(remote_env)
-
-			env = ChefSync::Environment.new(name: 'fake_env')
-
-			action = env.compare_local_and_remote_versions
-			expect(action).to be_a(Symbol)
-			expect(action).to eq(:update)
-		end
-	end
-
-	context 'when the remote does not exist' do
-		it 'needs to be created' do
-			error = "ERROR: The object you are looking for could not be found"
-			ChefSync::Environment.remote_knife.set_error(error, 100)
-
-			env = ChefSync::Environment.new(name: 'fake_env')
-
-			action = env.compare_local_and_remote_versions
-			expect(action).to be_a(Symbol)
-			expect(action).to eq(:create)
-		end
-	end
+	it_should_behave_like 'a chef resource'
 
 end
