@@ -2,8 +2,8 @@ require_relative '../../spec_helper'
 
 describe 'ChefSync::Role' do
 
-	let(:local_role) do
-		{
+	before(:all) do
+		@local_role = {
 			'name': 'fake_role',
 			'default_attributes': {},
 			'override_attributes': {},
@@ -13,20 +13,18 @@ describe 'ChefSync::Role' do
 			'run_list': [],
 			'env_run_lists': {}
 		}
-	end
 
-	let(:local_knife) do
-		local_knife = ChefSync::KnifeMock.new('role', :local)
-		local_knife.set_success(local_role)
-		return local_knife
+		ChefSync::Role.local_knife = ChefSync::KnifeMock.new('role', :local)
+		ChefSync::Role.local_knife.set_success(@local_role)
+		ChefSync::Role.remote_knife = ChefSync::KnifeMock.new('role', :remote)
+		ChefSync::Role.dryrun = false
 	end
 
 	context 'when the local and remote are the same' do
 		it 'has no required action' do
-			remote_knife = ChefSync::KnifeMock.new('role', :remote)
-			remote_knife.set_success(local_role)
+			ChefSync::Role.remote_knife.set_success(@local_role)
 
-			role = ChefSync::Role.new('fake_role', false, local_knife, remote_knife)
+			role = ChefSync::Role.new(name: 'fake_role')
 
 			action = role.compare_local_and_remote_versions
 			expect(action).to be_a(Symbol)
@@ -36,11 +34,10 @@ describe 'ChefSync::Role' do
 
 	context 'when the local and remote are different' do
 		it 'needs to be updated' do
-			remote_role = local_role.merge({'description' => 'This is a different fake chef role.'})
-			remote_knife = ChefSync::KnifeMock.new('role', :remote)
-			remote_knife.set_success(remote_role)
+			remote_role = @local_role.merge({'description' => 'This is a different fake chef role.'})
+			ChefSync::Role.remote_knife.set_success(remote_role)
 
-			role = ChefSync::Role.new('fake_role', false, local_knife, remote_knife)
+			role = ChefSync::Role.new(name: 'fake_role')
 
 			action = role.compare_local_and_remote_versions
 			expect(action).to be_a(Symbol)
@@ -51,11 +48,9 @@ describe 'ChefSync::Role' do
 	context 'when the remote does not exist' do
 		it 'needs to be created' do
 			error = "ERROR: The object you are looking for could not be found"
+			ChefSync::Role.remote_knife.set_error(error, 100)
 
-			remote_knife = ChefSync::KnifeMock.new('role', :remote)
-			remote_knife.set_error(error, 100)
-
-			role = ChefSync::Role.new('fake_role', false, local_knife, remote_knife)
+			role = ChefSync::Role.new(name: 'fake_role')
 
 			action = role.compare_local_and_remote_versions
 			expect(action).to be_a(Symbol)

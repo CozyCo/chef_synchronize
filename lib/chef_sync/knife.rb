@@ -7,11 +7,13 @@ class ChefSync
 		#Need to extend Chef::Knife::API in this class because knife_capture is top-level.
 		extend Chef::Knife::API
 
+		attr_reader :chef_resource
 		attr_reader :list_command
 		attr_reader :show_command
 		attr_reader :upload_command
 
 		def initialize(chef_resource, mode)
+			@chef_resource = chef_resource
 			@list_command = "#{chef_resource}_list".to_sym
 			@show_command = "#{chef_resource}_show".to_sym
 
@@ -69,6 +71,16 @@ class ChefSync
 			end
 		end
 
+		#Helper method to parse knife cookbook list into cookbooks.
+		def format_cookbook_list_output(knife_output)
+			cookbooks = {}
+			knife_output.each do |c|
+				cb, ver = c.gsub(/\s+/m, ' ').strip.split(" ")
+				cookbooks[cb] = ver
+			end
+			return cookbooks
+		end
+
 		def capture_output(command, args)
 			args << '-fj'
 			args << '-z' if self.local?
@@ -77,7 +89,11 @@ class ChefSync
 		end
 
 		def list(*args)
-			return self.capture_output(self.list_command, args)
+			parsed_output = self.capture_output(self.list_command, args)
+			if self.chef_resource == 'cookbook'
+				parsed_output = self.format_cookbook_list_output(parsed_output)
+			end
+			return parsed_output
 		end
 
 		def show(*args)

@@ -23,32 +23,27 @@ class ChefSync::Cookbook < ChefSync::ChefResource
 	attr_reader :remote_version_number
 	attr_accessor :file_change_log
 
-	def initialize(local_version_number, remote_version_number, *args)
+	def initialize(local_version_number:, remote_version_number:, **opts)
 		@local_version_number = local_version_number
 		@remote_version_number = remote_version_number
 		@file_change_log = {}
 
-		super(*args)
+		super(opts)
 	end
 
-	def self.sync(dryrun)
-		local_knife = ChefSync::Knife.new(self.resource_type, :local)
-		remote_knife = ChefSync::Knife.new(self.resource_type, :remote)
+	def self.get_local_resources
+		local_cookbooks = self.local_knife.list
+		remote_cookbooks = self.remote_knife.list
+		local_cookbook_list = []
 
-		local_cookbook_list = self.get_resource_list(local_knife)
-		remote_cookbook_list = self.get_resource_list(remote_knife)
-		self.resource_total = local_cookbook_list.count
-		action_summary = {}
-
-		local_cookbook_list.each do |cb, ver|
-			resource = self.new(ver, remote_cookbook_list[cb], cb, dryrun, local_knife, remote_knife)
-			action_summary[resource] = resource.sync
+		local_cookbooks.each do |cb, local_ver|
+			local_cookbook_list << {name: cb, local_version_number: local_ver, remote_version_number: remote_cookbooks[cb]}
 		end
-		return self.formatted_action_summary(action_summary)
+		return local_cookbook_list
 	end
 
-	def self.formatted_action_summary(action_summary)
-		changed_resources = action_summary.reject {|resource, action| action == :none}
+	def self.formatted_action_summary
+		changed_resources = self.action_summary.reject {|resource, action| action == :none}
 		output = []
 
 		changed_resources.each do |resource, action|
@@ -62,20 +57,6 @@ class ChefSync::Cookbook < ChefSync::ChefResource
 		return output
 	end
 
-	def self.get_resource_list(knife)
-		return self.format_knife_data(knife.list)
-	end
-
-	#Helper function to parse knife list data into cookbooks.
-	def self.format_knife_data(knife_output)
-		cookbooks = {}
-		knife_output.each do |c|
-			cb, ver = c.gsub(/\s+/m, ' ').strip.split(" ")
-			cookbooks[cb] = ver
-		end
-		return cookbooks
-	end
-
 	def get_remote_resource
 		ridley = Ridley.from_chef_config
 		remote_cookbook = ridley.cookbook.find(self.name, self.remote_version_number)
@@ -84,7 +65,7 @@ class ChefSync::Cookbook < ChefSync::ChefResource
 	end
 
 	def upload_resource
-		return self.remote_knife.upload(self.name, '--freeze')
+		return self.class.remote_knife.upload(self.name, '--freeze')
 	end
 
 	def compare_cookbook_files

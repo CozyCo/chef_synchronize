@@ -2,13 +2,18 @@ require_relative '../../spec_helper'
 
 describe 'ChefSync::DataBagItem' do
 
-	let(:local_dbag_file) do
-		{
+	before(:all) do
+		@local_dbag_file = {
 			'id': 'fake_dbag',
 			'data': {
 				'stuff': 'fake data'
 			}
 		}
+
+		ChefSync::DataBagItem.local_knife = ChefSync::KnifeMock.new('data_bag', :local)
+		ChefSync::DataBagItem.local_knife.set_success(@local_dbag_file)
+		ChefSync::DataBagItem.remote_knife = ChefSync::KnifeMock.new('data_bag', :remote)
+		ChefSync::DataBagItem.dryrun = false
 	end
 
 	let(:local_knife) do
@@ -19,10 +24,9 @@ describe 'ChefSync::DataBagItem' do
 
 	context 'when local and remote files are the same' do
 		it 'has no required action' do
-			remote_knife = ChefSync::KnifeMock.new('data_bag', :remote)
-			remote_knife.set_success(local_dbag_file)
+			ChefSync::DataBagItem.remote_knife.set_success(@local_dbag_file)
 
-			dbag = ChefSync::DataBagItem.new('fake_dbag', 'fake_dbag_file', false, local_knife, remote_knife)
+			dbag = ChefSync::DataBagItem.new(data_bag: 'fake_dbag', name: 'fake_dbag_file')
 
 			action = dbag.compare_local_and_remote_versions
 			expect(action).to be_a(Symbol)
@@ -32,11 +36,10 @@ describe 'ChefSync::DataBagItem' do
 
 	context 'when local and remote files are different' do
 		it 'needs to be updated' do
-			remote_dbag_file = local_dbag_file.merge({'data' => {'stuff' => 'different fake data'}})
-			remote_knife = ChefSync::KnifeMock.new('data_bag', :remote)
-			remote_knife.set_success(remote_dbag_file)
+			remote_dbag_file = @local_dbag_file.merge({'data' => {'stuff' => 'different fake data'}})
+			ChefSync::DataBagItem.remote_knife.set_success(remote_dbag_file)
 
-			dbag = ChefSync::DataBagItem.new('fake_dbag','fake_dbag_file', false, local_knife, remote_knife)
+			dbag = ChefSync::DataBagItem.new(data_bag: 'fake_dbag', name: 'fake_dbag_file')
 
 			action = dbag.compare_local_and_remote_versions
 			expect(action).to be_a(Symbol)
@@ -47,11 +50,9 @@ describe 'ChefSync::DataBagItem' do
 	context 'when the remote does not exist' do
 		it 'needs to be created' do
 			error = "ERROR: The object you are looking for could not be found"
+			ChefSync::DataBagItem.remote_knife.set_error(error, 100)
 
-			remote_knife = ChefSync::KnifeMock.new('data_bag', :remote)
-			remote_knife.set_error(error, 100)
-
-			dbag = ChefSync::DataBagItem.new('fake_dbag', 'fake_dbag_file', false, local_knife, remote_knife)
+			dbag = ChefSync::DataBagItem.new(data_bag: 'fake_dbag', name: 'fake_dbag_file')
 
 			action = dbag.compare_local_and_remote_versions
 			expect(action).to be_a(Symbol)

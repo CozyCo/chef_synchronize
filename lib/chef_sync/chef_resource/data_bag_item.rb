@@ -4,40 +4,36 @@ class ChefSync::DataBagItem < ChefSync::ChefResource
 
 	attr_reader :data_bag
 
-	def initialize(dbag, *args)
-		@data_bag = dbag
-		super(*args)
+	def initialize(data_bag:, **opts)
+		@data_bag = data_bag
+		super(opts)
 	end
 
-	def self.sync(dryrun)
-		local_knife = ChefSync::Knife.new(self.resource_type, :local)
-		remote_knife = ChefSync::Knife.new(self.resource_type, :remote)
-
-		local_data_bag_list = local_knife.list
-		self.resource_total = local_data_bag_list.count
-		action_summary = {}
+	def self.get_local_resources
+		local_data_bag_list = self.local_knife.list
+		local_data_bag_items = []
 
 		local_data_bag_list.each do |dbag|
-			local_dbag_items = local_knife.show(dbag)
-
-			local_dbag_items.each do |resource_name|
-				resource = self.new(dbag, resource_name, dryrun, local_knife, remote_knife)
-				action_summary[resource] = resource.sync
-			end
+			local_data_bag_items += local_knife.show(dbag).map {|item| {name: item, data_bag: dbag}}
 		end
-		return self.formatted_action_summary(action_summary)
+
+		return local_data_bag_items
 	end
 
 	def resource_path
 		return "#{self.class.resource_type}s/#{self.data_bag}/#{self.name}"
 	end
 
-	def get_resource(knife)
-		return knife.show(self.data_bag, self.name)
+	def get_local_resource
+		return self.class.local_knife.show(self.data_bag, self.name)
+	end
+
+	def get_remote_resource
+		return self.class.remote_knife.show(self.data_bag, self.name)
 	end
 
 	def upload_resource
-		return self.remote_knife.upload(self.data_bag, self.name_with_extension)
+		return self.class.remote_knife.upload(self.data_bag, self.name_with_extension)
 	end
 
 end

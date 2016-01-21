@@ -2,8 +2,8 @@ require_relative '../../spec_helper'
 
 describe 'ChefSync::Environment' do
 
-	let(:local_env) do
-		{
+	before(:all) do
+		@local_env = {
 			'name': 'fake_environment',
 			'default_attributes': {},
 			'override_attributes': {},
@@ -12,20 +12,18 @@ describe 'ChefSync::Environment' do
 			'cookbook_versions': {},
 			'chef_type': 'environment'
 		}
-	end
 
-	let(:local_knife) do
-		local_knife = ChefSync::KnifeMock.new('environment', :local)
-		local_knife.set_success(local_env)
-		return local_knife
+		ChefSync::Environment.local_knife = ChefSync::KnifeMock.new('environment', :local)
+		ChefSync::Environment.local_knife.set_success(@local_env)
+		ChefSync::Environment.remote_knife = ChefSync::KnifeMock.new('environment', :remote)
+		ChefSync::Environment.dryrun = false
 	end
 
 	context 'when the local and remote are the same' do
 		it 'has no required action' do
-			remote_knife = ChefSync::KnifeMock.new('environment', :remote)
-			remote_knife.set_success(local_env)
+			ChefSync::Environment.remote_knife.set_success(@local_env)
 
-			env = ChefSync::Environment.new('fake_env', false, local_knife, remote_knife)
+			env = ChefSync::Environment.new(name: 'fake_env')
 
 			action = env.compare_local_and_remote_versions
 			expect(action).to be_a(Symbol)
@@ -35,11 +33,10 @@ describe 'ChefSync::Environment' do
 
 	context 'when the local and remote are different' do
 		it 'needs to be updated' do
-			remote_env = local_env.merge({'description' => 'This is a different fake environment.'})
-			remote_knife = ChefSync::KnifeMock.new('environment', :remote)
-			remote_knife.set_success(remote_env)
+			remote_env = @local_env.merge({'description' => 'This is a different fake environment.'})
+			ChefSync::Environment.remote_knife.set_success(remote_env)
 
-			env = ChefSync::Environment.new('fake_env', false, local_knife, remote_knife)
+			env = ChefSync::Environment.new(name: 'fake_env')
 
 			action = env.compare_local_and_remote_versions
 			expect(action).to be_a(Symbol)
@@ -50,11 +47,9 @@ describe 'ChefSync::Environment' do
 	context 'when the remote does not exist' do
 		it 'needs to be created' do
 			error = "ERROR: The object you are looking for could not be found"
+			ChefSync::Environment.remote_knife.set_error(error, 100)
 
-			remote_knife = ChefSync::KnifeMock.new('environment', :remote)
-			remote_knife.set_error(error, 100)
-
-			env = ChefSync::Environment.new('fake_env', false, local_knife, remote_knife)
+			env = ChefSync::Environment.new(name: 'fake_env')
 
 			action = env.compare_local_and_remote_versions
 			expect(action).to be_a(Symbol)

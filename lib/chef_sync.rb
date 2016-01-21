@@ -21,7 +21,7 @@ class ChefSync
 		dryrun ? summary = dryrun_message : summary = ""
 		log = [summary]
 		output.each do |resource, responses|
-			summary << "#{responses.count}/#{resource.resource_total} #{resource.resource_type}s have changed. "
+			summary << "#{responses.count}/#{resource.action_summary.length} #{resource.resource_type}s have changed. "
 			log += responses
 		end
 		return log
