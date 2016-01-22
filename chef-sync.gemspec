@@ -27,4 +27,5 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "ridley"
   spec.add_runtime_dependency "knife-api"
   spec.add_runtime_dependency "slack-post"
+  spec.add_runtime_dependency "tqdm"
 end

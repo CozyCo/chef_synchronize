@@ -1,3 +1,5 @@
+require 'tqdm'
+
 class ChefSync
 	class ChefResource
 
@@ -36,7 +38,7 @@ class ChefSync
 
 			local_resources = self.get_local_resources
 
-			local_resources.each do |args|
+			local_resources.tqdm(leave: true, desc: "Checking #{self.resource_type}s").each do |args|
 				resource = self.new(args)
 				self.action_summary[resource] = resource.sync
 			end
