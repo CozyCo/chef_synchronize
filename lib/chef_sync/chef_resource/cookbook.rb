@@ -47,7 +47,9 @@ class ChefSync::Cookbook < ChefSync::ChefResource
 		output = []
 
 		changed_resources.each do |resource, action|
-			output << resource.resource_path + CHANGE_LOG_SUMMARIES[action]
+			self.actionable_change?(action) ? change = "" : change = "WARNING: "
+			change << resource.resource_path + CHANGE_LOG_SUMMARIES[action]
+			output << change
 			if action == :version_changed
 				resource.file_change_log.each do |file, file_action|
 					output << file + FILE_CHANGE_LOG_SUMMARIES[file_action]
