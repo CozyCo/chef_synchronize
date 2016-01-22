@@ -35,12 +35,11 @@ class ChefSync
 	end
 
 	def post_to_slack
-		::Slack::Post.configure(
-			webhook_url: ENV['CHEFSYNC_SLACK_WEBHOOK_URL'],
-			username: ENV['CHEFSYNC_SLACK_USERNAME'],
-			channel: ENV['CHEFSYNC_SLACK_CHANNEL']
-		)
+		opts = { webhook_url: ENV['CHEFSYNC_SLACK_WEBHOOK_URL'] }
+		opts[username] = ENV['CHEFSYNC_SLACK_USERNAME'] if ENV['CHEFSYNC_SLACK_USERNAME']
+		opts[channel] = ENV['CHEFSYNC_SLACK_CHANNEL'] if ENV['CHEFSYNC_SLACK_CHANNEL']
 
+		::Slack::Post.configure( opts )
 		::Slack::Post.post_with_attachments(@summary, self.slack_attachment)
 	end
 
