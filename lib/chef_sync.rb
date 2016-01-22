@@ -1,4 +1,6 @@
 #!/usr/bin/env ruby
+require 'slack/post'
+
 class ChefSync
 
 	require 'chef_sync/chef_resource'
@@ -10,21 +12,63 @@ class ChefSync
 
 	RESOURCE_TYPES = [Role, Environment, DataBagItem, Cookbook]
 
-	def run(dryrun=true)
-		output = RESOURCE_TYPES.each_with_object({}) {|resource, output| output[resource] = resource.sync(dryrun)}
+	DRYRUN_MESSAGE = "This was a dry run. Nothing has been updated on the chef server. "
 
-		return format_output(dryrun, output)
+	attr_reader :post_to_slack
+	attr_reader :dryrun
+	attr_accessor :summary
+	attr_accessor :log
+
+	def initialize(post_to_slack=false,dryrun=true)
+		@post_to_slack = post_to_slack
+		@dryrun = dryrun
+		@summary = ""
+		@log = [summary]
 	end
 
-	def format_output(dryrun, output)
-		dryrun_message = "This was a dry run. Nothing has been updated on the chef server. "
-		dryrun ? summary = dryrun_message : summary = ""
-		log = [summary]
-		output.each do |resource, responses|
-			summary << "#{responses.count}/#{resource.action_summary.length} #{resource.resource_type}s have changed. "
-			log += responses
+	def run
+		self.summary = DRYRUN_MESSAGE if self.dryrun
+
+		RESOURCE_TYPES.each do |resource|
+			responses = resource.sync(self.dryrun)
+			self.summary << "#{responses.count}/#{resource.action_summary.length} #{resource.resource_type}s have changed. "
+			self.log += responses
 		end
-		return log
+
+		case self.post_to_slack
+		when true
+			self.post
+		when false
+			puts self.summary, self.log
+		end
+	end
+
+	def post
+		if ENV['CHEFSYNC_WEBHOOK_URL']
+			::Slack::Post.configure(
+				webhook_url: ENV['CHEFSYNC_WEBHOOK_URL'],
+				username: ENV['CHEFSYNC_USERNAME'],
+				channel: ENV['CHEFSYNC_CHANNEL']
+				)
+
+			::Slack::Post.post_with_attachments(self.summary, self.slack_attachment)
+		else
+			puts "CHEFSYNC_WEBHOOK_URL was not set. Cannot post to Slack."
+		end
+	end
+
+	def slack_attachment
+		[
+			{
+				fallback: self.summary,
+				fields: [
+					{
+						value: self.log.join("\n"),
+						short: false
+					}
+				]
+			}
+		]
 	end
 
 end

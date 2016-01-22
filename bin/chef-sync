@@ -6,7 +6,8 @@ require 'optparse'
 require 'chef_sync'
 
 options = {
-	dryrun: true
+	dryrun: true,
+	post_to_slack: false
 }
 
 OptionParser.new do |opts|
@@ -16,6 +17,11 @@ OptionParser.new do |opts|
 		'Print out changes without actually syncing to chef server		(default: true)') do |d|
 			options[:dryrun] = d
 		end
+
+	opts.on('-p', '--post-to-slack',
+		'Post results to Slack instead of printing them in the console		(default: false)') do |p|
+			options[:post_to_slack] = p
+		end
 end.parse!
 
-puts ChefSync.new.run(options[:dryrun])
+ChefSync.new(options[:post_to_slack], options[:dryrun]).run
