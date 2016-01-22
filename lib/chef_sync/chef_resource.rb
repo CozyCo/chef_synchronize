@@ -18,10 +18,6 @@ class ChefSync
 
 		@action_summary = {}
 
-		attr_reader :name
-		attr_reader :name_with_extension
-		attr_accessor :change
-
 		def initialize(name:)
 			@name = name
 			@name_with_extension = name + FILE_EXTENSION
@@ -71,19 +67,19 @@ class ChefSync
 		end
 
 		def resource_path
-			return "#{self.class.resource_type}s/#{self.name}"
+			return "#{self.class.resource_type}s/#{@name}"
 		end
 
 		def get_local_resource
-			return self.class.local_knife.show(self.name)
+			return self.class.local_knife.show(@name)
 		end
 
 		def get_remote_resource
-			return self.class.remote_knife.show(self.name)
+			return self.class.remote_knife.show(@name)
 		end
 
 		def upload_resource
-			return self.class.remote_knife.upload(self.name_with_extension)
+			return self.class.remote_knife.upload(@name_with_extension)
 		end
 
 		def compare_local_and_remote_versions
@@ -92,17 +88,17 @@ class ChefSync
 
 			case
 			when remote_resource.empty?
-				self.change = :create
+				@change = :create
 			when local_resource != remote_resource
-				self.change = :update
+				@change = :update
 			end
 
-			return self.change
+			return @change
 		end
 
 		def sync
 			action = self.compare_local_and_remote_versions
-			if self.class.dryrun? and self.class.actionable_change?(self.change)
+			if self.class.dryrun? and self.class.actionable_change?(@change)
 				self.upload_resource
 			end
 			return action

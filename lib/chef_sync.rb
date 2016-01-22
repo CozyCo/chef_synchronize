@@ -14,56 +14,43 @@ class ChefSync
 
 	DRYRUN_MESSAGE = "This was a dry run. Nothing has been updated on the chef server. "
 
-	attr_reader :post_to_slack
-	attr_reader :dryrun
-	attr_accessor :summary
-	attr_accessor :log
-
-	def initialize(post_to_slack=false,dryrun=true)
-		@post_to_slack = post_to_slack
+	def initialize(slack=false,dryrun=true)
+		@slack = slack
 		@dryrun = dryrun
 		@summary = ""
-		@log = [summary]
+		@log = [@summary]
 	end
 
 	def run
-		self.summary = DRYRUN_MESSAGE if self.dryrun
+		@summary = DRYRUN_MESSAGE if @dryrun
 
 		RESOURCE_TYPES.each do |resource|
-			responses = resource.sync(self.dryrun)
-			self.summary << "#{responses.count}/#{resource.action_summary.length} #{resource.resource_type}s have changed. "
-			self.log += responses
+			responses = resource.sync(@dryrun)
+			@summary << "#{responses.count}/#{resource.action_summary.length} #{resource.resource_type}s have changed. "
+			@log += responses
 		end
 
-		case self.post_to_slack
-		when true
-			self.post
-		when false
-			puts self.summary, self.log
-		end
+		puts @summary, @log
+		self.post_to_slack if @slack
 	end
 
-	def post
-		if ENV['CHEFSYNC_WEBHOOK_URL']
-			::Slack::Post.configure(
-				webhook_url: ENV['CHEFSYNC_WEBHOOK_URL'],
-				username: ENV['CHEFSYNC_USERNAME'],
-				channel: ENV['CHEFSYNC_CHANNEL']
-				)
+	def post_to_slack
+		::Slack::Post.configure(
+			webhook_url: ENV['CHEFSYNC_SLACK_WEBHOOK_URL'],
+			username: ENV['CHEFSYNC_SLACK_USERNAME'],
+			channel: ENV['CHEFSYNC_SLACK_CHANNEL']
+		)
 
-			::Slack::Post.post_with_attachments(self.summary, self.slack_attachment)
-		else
-			puts "CHEFSYNC_WEBHOOK_URL was not set. Cannot post to Slack."
-		end
+		::Slack::Post.post_with_attachments(@summary, self.slack_attachment)
 	end
 
 	def slack_attachment
 		[
 			{
-				fallback: self.summary,
+				fallback: @summary,
 				fields: [
 					{
-						value: self.log.join("\n"),
+						value: @log.join("\n"),
 						short: false
 					}
 				]

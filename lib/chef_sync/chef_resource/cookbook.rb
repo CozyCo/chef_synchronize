@@ -19,10 +19,6 @@ class ChefSync::Cookbook < ChefSync::ChefResource
 
 	@resource_type = 'cookbook'
 
-	attr_reader :local_version_number
-	attr_reader :remote_version_number
-	attr_accessor :file_change_log
-
 	def initialize(local_version_number:, remote_version_number:, **opts)
 		@local_version_number = local_version_number
 		@remote_version_number = remote_version_number
@@ -61,13 +57,13 @@ class ChefSync::Cookbook < ChefSync::ChefResource
 
 	def get_remote_resource
 		ridley = Ridley.from_chef_config
-		remote_cookbook = ridley.cookbook.find(self.name, self.remote_version_number)
+		remote_cookbook = ridley.cookbook.find(@name, @remote_version_number)
 		remote_cookbook_files = Chef::CookbookVersion::COOKBOOK_SEGMENTS.collect { |d| remote_cookbook.method(d).call }.flatten
 		return remote_cookbook_files
 	end
 
 	def upload_resource
-		return self.class.remote_knife.upload(self.name, '--freeze')
+		return self.class.remote_knife.upload(@name, '--freeze')
 	end
 
 	def compare_cookbook_files
@@ -77,30 +73,30 @@ class ChefSync::Cookbook < ChefSync::ChefResource
 			local_file_path = "#{self.resource_path}/#{remote_file['path']}"
 			begin
 				local_file_checksum = Chef::CookbookVersion.checksum_cookbook_file(File.open(local_file_path))
-				file_change_log[local_file_path] = :file_changed unless local_file_checksum == remote_file['checksum']
+				@file_change_log[local_file_path] = :file_changed unless local_file_checksum == remote_file['checksum']
 			rescue Errno::ENOENT => e
-				file_change_log[local_file_path] = :file_missing
+				@file_change_log[local_file_path] = :file_missing
 			end
 		end
-		return self.file_change_log
+		return @file_change_log
 	end
 
 	def compare_local_and_remote_versions
-		local_ver = self.local_version_number
-		remote_ver = self.remote_version_number
+		local_ver = @local_version_number
+		remote_ver = @remote_version_number
 
 		case
-		when !remote_ver
-			self.change = :create
-		when local_ver < remote_ver
-			self.change = :version_regressed
-		when local_ver == remote_ver
-			self.change = :version_changed unless self.compare_cookbook_files.empty?
-		when local_ver > remote_ver
-			self.change = :update
+		when !@remote_version_number
+			@change = :create
+		when @local_version_number < @remote_version_number
+			@change = :version_regressed
+		when @local_version_number == @remote_version_number
+			@change = :version_changed unless self.compare_cookbook_files.empty?
+		when @local_version_number > @remote_version_number
+			@change = :update
 		end
 
-		return self.change
+		return @change
 	end
 
 end
