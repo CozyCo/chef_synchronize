@@ -19,12 +19,22 @@ class ChefSync::Cookbook < ChefSync::ChefResource
 
 	@resource_type = 'cookbook'
 
+	attr_reader :file_change_log
+
 	def initialize(local_version_number:, remote_version_number:, **opts)
 		@local_version_number = local_version_number
 		@remote_version_number = remote_version_number
 		@file_change_log = {}
 
 		super(opts)
+	end
+
+	def self.changes(dryrun)
+		return self.reject {|resource| resource.change == :none}.flat_map do |resource|
+			self.actionable_change?(resource.change) ? summary = "" : summary = "WARNING: "
+			summary = [summary << resource.resource_path + CHANGE_LOG_SUMMARIES[resource.change]]
+			summary << resource.file_change_log.map {|file, file_action| file + FILE_CHANGE_LOG_SUMMARIES[file_action]}
+		end
 	end
 
 	def self.get_local_resources
@@ -36,23 +46,6 @@ class ChefSync::Cookbook < ChefSync::ChefResource
 			local_cookbook_list << {name: cb, local_version_number: local_ver, remote_version_number: remote_cookbooks[cb]}
 		end
 		return local_cookbook_list
-	end
-
-	def self.formatted_action_summary
-		changed_resources = self.action_summary.reject {|resource, action| action == :none}
-		output = []
-
-		changed_resources.each do |resource, action|
-			self.actionable_change?(action) ? change = "" : change = "WARNING: "
-			change << resource.resource_path + CHANGE_LOG_SUMMARIES[action]
-			output << change
-			if action == :version_changed
-				resource.file_change_log.each do |file, file_action|
-					output << file + FILE_CHANGE_LOG_SUMMARIES[file_action]
-				end
-			end
-		end
-		return output
 	end
 
 	def get_remote_resource

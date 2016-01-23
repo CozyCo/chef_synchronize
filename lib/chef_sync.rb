@@ -25,8 +25,8 @@ class ChefSync
 		@summary = DRYRUN_MESSAGE if @dryrun
 
 		RESOURCE_TYPES.each do |resource|
-			responses = resource.sync(@dryrun)
-			@summary << "#{responses.count}/#{resource.action_summary.length} #{resource.resource_type}s have changed. "
+			responses = resource.changes(@dryrun)
+			@summary << "#{responses.count}/#{resource.total_resources} #{resource.resource_type}s have changed. "
 			@log += responses
 		end
 
