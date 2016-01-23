@@ -10,13 +10,10 @@ class ChefSync::DataBagItem < ChefSync::ChefResource
 
 	def self.get_local_resources
 		local_data_bag_list = self.local_knife.list
-		local_data_bag_items = []
 
-		local_data_bag_list.each do |dbag|
-			local_data_bag_items += local_knife.show(dbag).map {|item| {name: item, data_bag: dbag}}
+		return local_data_bag_list.flat_map do |dbag|
+			local_knife.show(dbag).map {|item| {name: item, data_bag: dbag}}
 		end
-
-		return local_data_bag_items
 	end
 
 	def resource_path

@@ -30,22 +30,21 @@ class ChefSync::Cookbook < ChefSync::ChefResource
 	end
 
 	def self.changes(dryrun)
-		return self.reject {|resource| resource.change == :none}.flat_map do |resource|
-			self.actionable_change?(resource.change) ? summary = "" : summary = "WARNING: "
-			summary = [summary << resource.resource_path + CHANGE_LOG_SUMMARIES[resource.change]]
-			summary << resource.file_change_log.map {|file, file_action| file + FILE_CHANGE_LOG_SUMMARIES[file_action]}
+		self.reject {|resource| resource.change == :none}.flat_map do |resource|
+			self.actionable_change?(resource.change) ? prefix = "" : prefix = "WARNING: "
+			summary = [prefix + resource.resource_path + CHANGE_LOG_SUMMARIES[resource.change]]
+			file_changes = resource.file_change_log.map {|file, file_action| file + FILE_CHANGE_LOG_SUMMARIES[file_action]}
+			file_changes.empty? ? summary : summary << file_changes
 		end
 	end
 
 	def self.get_local_resources
 		local_cookbooks = self.local_knife.list
 		remote_cookbooks = self.remote_knife.list
-		local_cookbook_list = []
 
-		local_cookbooks.each do |cb, local_ver|
-			local_cookbook_list << {name: cb, local_version_number: local_ver, remote_version_number: remote_cookbooks[cb]}
+		return local_cookbooks.map do |cb, local_ver|
+			{name: cb, local_version_number: local_ver, remote_version_number: remote_cookbooks[cb]}
 		end
-		return local_cookbook_list
 	end
 
 	def get_remote_resource
