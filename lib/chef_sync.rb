@@ -18,11 +18,11 @@ class ChefSync
 		@slack = slack
 		@dryrun = dryrun
 		@summary = ""
-		@log = [@summary]
+		@log = []
 	end
 
 	def run
-		@summary = DRYRUN_MESSAGE if @dryrun
+		@summary = DRYRUN_MESSAGE.dup if @dryrun
 
 		RESOURCE_TYPES.each do |resource|
 			responses = resource.changes(@dryrun)
@@ -30,8 +30,8 @@ class ChefSync
 			@log += responses
 		end
 
-		puts @summary, @log
 		self.post_to_slack if @slack
+		return @summary, @log
 	end
 
 	def post_to_slack
@@ -40,7 +40,12 @@ class ChefSync
 		opts[channel] = ENV['CHEFSYNC_SLACK_CHANNEL'] if ENV['CHEFSYNC_SLACK_CHANNEL']
 
 		::Slack::Post.configure( opts )
-		::Slack::Post.post_with_attachments(@summary, self.slack_attachment)
+		begin
+			::Slack::Post.post_with_attachments(@summary, self.slack_attachment)
+		#Assuming that a RuntimeError is due to improperly configured Slack::Post.
+		rescue RuntimeError => e
+			puts "Couldn't post to Slack: #{e}"
+		end
 	end
 
 	def slack_attachment

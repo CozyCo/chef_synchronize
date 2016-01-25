@@ -19,9 +19,9 @@ OptionParser.new do |opts|
 		end
 
 	opts.on('-p', '--post-to-slack',
-		'Post results to Slack instead of printing them in the console		(default: false)') do |p|
+		'Post a summary of changes to Slack								(default: false)') do |p|
 			options[:post_to_slack] = p
 		end
 end.parse!
 
-ChefSync.new(options[:post_to_slack], options[:dryrun]).run
+puts ChefSync.new(options[:post_to_slack], options[:dryrun]).run
