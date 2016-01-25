@@ -1,0 +1,27 @@
+#!/usr/bin/env ruby
+lib = File.expand_path('../../lib', __FILE__)
+$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
+
+require 'optparse'
+require 'chef_sync'
+
+options = {
+	dryrun: true,
+	post_to_slack: false
+}
+
+OptionParser.new do |opts|
+	opts.banner = 'Usage: chef-sync [options]'
+
+	opts.on('-d', '--[no-]dryrun',
+		'Print out changes without actually syncing to chef server		(default: true)') do |d|
+			options[:dryrun] = d
+		end
+
+	opts.on('-p', '--post-to-slack',
+		'Post a summary of changes to Slack								(default: false)') do |p|
+			options[:post_to_slack] = p
+		end
+end.parse!
+
+puts ChefSync.new(options[:post_to_slack], options[:dryrun]).run
