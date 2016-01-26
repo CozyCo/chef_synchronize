@@ -8,8 +8,8 @@ class ChefSync::DataBagItem < ChefSync::ChefResource
 		super(opts)
 	end
 
-	def self.get_local_resources
-		local_data_bag_list = self.local_knife.list
+	def self.get_local_resources(local_knife, remote_knife)
+		local_data_bag_list = local_knife.list
 
 		return local_data_bag_list.flat_map do |dbag|
 			local_knife.show(dbag).map {|item| {name: item, data_bag: dbag}}
@@ -21,15 +21,15 @@ class ChefSync::DataBagItem < ChefSync::ChefResource
 	end
 
 	def get_local_resource
-		return self.class.local_knife.show(@data_bag, @name)
+		return @local_knife.show(@data_bag, @name)
 	end
 
 	def get_remote_resource
-		return self.class.remote_knife.show(@data_bag, @name)
+		return @remote_knife.show(@data_bag, @name)
 	end
 
 	def upload_resource
-		return self.class.remote_knife.upload(@data_bag, @name_with_extension)
+		return @remote_knife.upload(@data_bag, @name_with_extension)
 	end
 
 end

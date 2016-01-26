@@ -3,17 +3,19 @@ require_relative '../chef_resource_shared_behaviors'
 
 describe 'ChefSync::DataBagItem' do
 
-	before(:all) do
-		@resource_class = ChefSync::DataBagItem
+	let(:resource_class) {ChefSync::DataBagItem}
 
-		@local_resource = {
+	let(:local_resource) do
+		{
 			'id': 'fake_dbag',
 			'data': {
 				'stuff': 'fake data'
 			}
 		}
+	end
 
-		@remote_resource = @local_resource.merge({'data' => {'stuff' => 'different fake data'}})
+	let(:remote_resource) do
+		local_resource.merge({'data' => {'stuff' => 'different fake data'}})
 	end
 
 	let(:init_args) { {name: 'fake_data_bag_item', data_bag: 'fake_data_bag'} }

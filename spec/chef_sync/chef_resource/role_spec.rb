@@ -3,10 +3,10 @@ require_relative '../chef_resource_shared_behaviors'
 
 describe 'ChefSync::Role' do
 
-	before(:all) do
-		@resource_class = ChefSync::Role
+	let(:resource_class) {ChefSync::Role}
 
-		@local_resource = {
+	let(:local_resource) do
+		{
 			'name': 'fake_role',
 			'default_attributes': {},
 			'override_attributes': {},
@@ -16,8 +16,10 @@ describe 'ChefSync::Role' do
 			'run_list': [],
 			'env_run_lists': {}
 		}
+	end
 
-		@remote_resource = @local_resource.merge({'description' => 'This is a different fake chef role.'})
+	let(:remote_resource) do
+		local_resource.merge({'description' => 'This is a different fake chef role.'})
 	end
 
 	let(:init_args) { {name: 'fake_role'} }

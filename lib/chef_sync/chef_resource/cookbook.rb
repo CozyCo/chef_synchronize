@@ -29,22 +29,26 @@ class ChefSync::Cookbook < ChefSync::ChefResource
 		super(opts)
 	end
 
-	def self.changes(dryrun)
-		self.reject {|resource| resource.change == :none}.flat_map do |resource|
-			self.actionable_change?(resource.change) ? prefix = "" : prefix = "WARNING: "
-			summary = [prefix + resource.resource_path + CHANGE_LOG_SUMMARIES[resource.change]]
-			file_changes = resource.file_change_log.map {|file, file_action| file + FILE_CHANGE_LOG_SUMMARIES[file_action]}
-			file_changes.empty? ? summary : summary << file_changes
-		end
-	end
-
-	def self.get_local_resources
-		local_cookbooks = self.local_knife.list
-		remote_cookbooks = self.remote_knife.list
+	def self.get_local_resources(local_knife, remote_knife)
+		local_cookbooks = local_knife.list
+		remote_cookbooks = remote_knife.list
 
 		return local_cookbooks.map do |cb, local_ver|
 			{name: cb, local_version_number: local_ver, remote_version_number: remote_cookbooks[cb]}
 		end
+	end
+
+	def version_changed?
+		return @change == :version_changed
+	end
+
+	def summarize_changes
+		self.actionable_change? ? prefix = "" : prefix = "WARNING: "
+		summary = [prefix + self.resource_path + CHANGE_LOG_SUMMARIES[@change]]
+		if self.version_changed?
+			summary << @file_change_log.map {|file, file_action| file + FILE_CHANGE_LOG_SUMMARIES[file_action]}
+		end
+		return summary
 	end
 
 	def get_remote_resource
@@ -55,7 +59,7 @@ class ChefSync::Cookbook < ChefSync::ChefResource
 	end
 
 	def upload_resource
-		return self.class.remote_knife.upload(@name, '--freeze')
+		return self.remote_knife.upload(@name, '--freeze')
 	end
 
 	def compare_cookbook_files
