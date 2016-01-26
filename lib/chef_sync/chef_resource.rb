@@ -49,7 +49,7 @@ class ChefSync
 		def self.changes(dryrun)
 			self.dryrun = dryrun
 
-			return self.reject(&:unchanged?).flat_map(&:summarize_changes)
+			return self.select(&:changed?).flat_map(&:summarize_changes)
 		end
 
 		def self.get_local_resources(local_knife, remote_knife)
@@ -65,8 +65,8 @@ class ChefSync
 			return ChefSync::Knife.new(self.resource_type, :remote)
 		end
 
-		def unchanged?
-			return @change == :none
+		def changed?
+			return @change != :none
 		end
 
 		def actionable_change?
