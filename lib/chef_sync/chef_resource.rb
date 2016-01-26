@@ -3,8 +3,6 @@ require 'tqdm'
 class ChefSync
 	class ChefResource
 
-		extend Enumerable
-
 		CHANGE_LOG_SUMMARIES = {
 			:create => " was created.",
 			:update => " was updated."
@@ -16,8 +14,8 @@ class ChefSync
 
 		class << self; attr_reader :resource_type end
 		class << self; attr_accessor :total_resources end
-		class << self; attr_accessor :dryrun end
 
+		attr_reader :name
 		attr_reader :change
 
 		def initialize(name:, local_knife:, remote_knife:, dryrun:)
@@ -31,14 +29,16 @@ class ChefSync
 			@change = :none
 		end
 
-		def self.each
+		def self.each(dryrun)
+			return enum_for(:each, dryrun) unless block_given?
+
 			local_knife = self.make_local_knife
 			remote_knife = self.make_remote_knife
 
 			local_resources = self.get_local_resources(local_knife, remote_knife)
 			self.total_resources = local_resources.count
 
-			default_args = {local_knife: local_knife, remote_knife: remote_knife, dryrun: self.dryrun}
+			default_args = {local_knife: local_knife, remote_knife: remote_knife, dryrun: dryrun}
 			local_resources.tqdm(leave: true, desc: "Checking #{self.resource_type}s").each do |args|
 				resource = self.new(args.merge(default_args))
 				resource.sync
@@ -47,9 +47,7 @@ class ChefSync
 		end
 
 		def self.changes(dryrun)
-			self.dryrun = dryrun
-
-			return self.select(&:changed?).flat_map(&:summarize_changes)
+			return self.each(dryrun).select(&:changed?).flat_map(&:summarize_changes)
 		end
 
 		def self.get_local_resources(local_knife, remote_knife)

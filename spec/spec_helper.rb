@@ -20,6 +20,30 @@ class ChefSync
 		end
 
 	end
+
+
+	class ChefResourceMock < ChefResource
+
+		@resource_type = 'fake_resource'
+
+		attr_accessor :sync_called
+
+		def initialize( *args )
+			super
+			@sync_called = false
+			@change = :update
+		end
+
+		def sync
+			@sync_called = true
+		end
+
+		def sync_called?
+			return @sync_called
+		end
+
+	end
+
 end
 
 RSpec.configure do |config|
