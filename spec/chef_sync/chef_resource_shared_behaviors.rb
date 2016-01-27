@@ -12,39 +12,75 @@ RSpec.shared_examples 'a chef resource' do
 		ChefSync::KnifeMock.new(resource_class.resource_type, :remote)
 	end
 
-	let(:args) do
-		init_args.merge({local_knife: local_knife, remote_knife: remote_knife, dryrun: false})
+	let(:dryrun_args) do
+		init_args.merge({local_knife: local_knife, remote_knife: remote_knife, dryrun: true})
 	end
 
-	it 'has no required action when the local and remote are the same' do
-		remote_knife.set_success(local_resource)
+	let(:no_dryrun_args) {dryrun_args.merge({dryrun: false})}
 
-		resource = resource_class.new(args)
+	context 'when the local and remote are the same' do
 
-		action = resource.compare_local_and_remote_versions
-		expect(action).to be_a(Symbol)
-		expect(action).to eq(:none)
+		it 'has no required action' do
+			remote_knife.set_success(local_resource)
+
+			resource = resource_class.new(dryrun_args)
+			expect(resource).to receive(:upload_resource).never
+
+			action = resource.sync
+			expect(action).to be_a(Symbol)
+			expect(action).to eq(:none)
+		end
+
 	end
 
-	it 'needs to be updated when the local and remote are different' do
-		remote_knife.set_success(remote_resource)
 
-		resource = resource_class.new(args)
+	context 'when the local and remote are different' do
 
-		action = resource.compare_local_and_remote_versions
-		expect(action).to be_a(Symbol)
-		expect(action).to eq(:update)
+		it 'needs to be updated' do
+			remote_knife.set_success(remote_resource)
+
+			resource = resource_class.new(dryrun_args)
+			expect(resource).to receive(:upload_resource).never
+
+			action = resource.sync
+			expect(action).to be_a(Symbol)
+			expect(action).to eq(:update)
+		end
+
+		it 'uploads the changed resource when not in dryrun mode' do
+			remote_knife.set_success(remote_resource)
+
+			resource = resource_class.new(no_dryrun_args)
+			expect(resource).to receive(:upload_resource)
+			resource.sync
+		end
+
 	end
 
-	it 'needs to be created when the remote does not exist' do
-		error = "ERROR: The object you are looking for could not be found"
-		remote_knife.set_error(error, 100)
 
-		resource = resource_class.new(args)
+	context 'when the remote does not exist' do
 
-		action = resource.compare_local_and_remote_versions
-		expect(action).to be_a(Symbol)
-		expect(action).to eq(:create)
+		it 'needs to be created' do
+			error = "ERROR: The object you are looking for could not be found"
+			remote_knife.set_error(error, 100)
+
+			resource = resource_class.new(dryrun_args)
+			expect(resource).to receive(:upload_resource).never
+
+			action = resource.sync
+			expect(action).to be_a(Symbol)
+			expect(action).to eq(:create)
+		end
+
+		it 'uploads the new resource when not in dryrun mode' do
+			error = "ERROR: The object you are looking for could not be found"
+			remote_knife.set_error(error, 100)
+
+			resource = resource_class.new(no_dryrun_args)
+			expect(resource).to receive(:upload_resource)
+			resource.sync
+		end
+
 	end
 
 end
