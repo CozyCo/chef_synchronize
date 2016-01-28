@@ -105,8 +105,9 @@ class ChefSync
 			stdout, stderr, status = knife_output
 			unless status == 0
 				puts "Received STDERR #{stderr} when trying to run knife_capture(#{self.upload_command}, #{args})."
+				return false
 			end
-			return stdout
+			return true
 		end
 	end
 end

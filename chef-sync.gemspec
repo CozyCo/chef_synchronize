@@ -7,7 +7,7 @@ Gem::Specification.new do |spec|
   spec.name          = "chef-sync"
   spec.version       = ChefSync::VERSION
   spec.authors       = ["Rachel King"]
-  spec.email         = ["rachel@cozy.co"]
+  spec.email         = ["opensource@cozy.co"]
   spec.summary       = %q{Sync a monolithic chef repo to a chef server.}
   spec.description   = %q{Sync a monolithic chef repo to a chef server.}
   spec.homepage      = ""

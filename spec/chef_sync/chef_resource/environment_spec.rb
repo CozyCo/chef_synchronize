@@ -3,10 +3,10 @@ require_relative '../chef_resource_shared_behaviors'
 
 describe 'ChefSync::Environment' do
 
-	before(:all) do
-		@resource_class = ChefSync::Environment
+	let(:resource_class) {ChefSync::Environment}
 
-		@local_resource = {
+	let(:local_resource) do
+		{
 			'name': 'fake_environment',
 			'default_attributes': {},
 			'override_attributes': {},
@@ -15,8 +15,10 @@ describe 'ChefSync::Environment' do
 			'cookbook_versions': {},
 			'chef_type': 'environment'
 		}
+	end
 
-		@remote_resource = @local_resource.merge({'description' => 'This is a different fake environment.'})
+	let(:remote_resource) do
+		local_resource.merge({'description' => 'This is a different fake environment.'})
 	end
 
 	let(:init_args) { {name: 'fake_environment'} }
