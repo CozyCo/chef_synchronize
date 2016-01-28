@@ -36,8 +36,8 @@ class ChefSync
 
 	def post_to_slack
 		opts = { webhook_url: ENV['CHEFSYNC_SLACK_WEBHOOK_URL'] }
-		opts[username] = ENV['CHEFSYNC_SLACK_USERNAME'] if ENV['CHEFSYNC_SLACK_USERNAME']
-		opts[channel] = ENV['CHEFSYNC_SLACK_CHANNEL'] if ENV['CHEFSYNC_SLACK_CHANNEL']
+		opts[:username] = ENV['CHEFSYNC_SLACK_USERNAME'] if ENV['CHEFSYNC_SLACK_USERNAME']
+		opts[:channel] = ENV['CHEFSYNC_SLACK_CHANNEL'] if ENV['CHEFSYNC_SLACK_CHANNEL']
 
 		::Slack::Post.configure( opts )
 		begin
