@@ -19,7 +19,7 @@ OptionParser.new do |opts|
 		end
 
 	opts.on('-p', '--post-to-slack',
-		'Post a summary of changes to Slack								(default: false)') do |p|
+		'Post a summary of changes to Slack					(default: false)') do |p|
 			options[:post_to_slack] = p
 		end
 end.parse!
