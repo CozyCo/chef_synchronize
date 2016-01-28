@@ -59,7 +59,7 @@ class ChefSync::Cookbook < ChefSync::ChefResource
 	end
 
 	def upload_resource
-		return self.remote_knife.upload(@name, '--freeze')
+		return @remote_knife.upload(@name, '--freeze')
 	end
 
 	def compare_cookbook_files
