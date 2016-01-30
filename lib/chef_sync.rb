@@ -41,7 +41,7 @@ class ChefSync
 
 		::Slack::Post.configure( opts )
 		begin
-			::Slack::Post.post_with_attachments(@summary, self.slack_attachment)
+			::Slack::Post.post_with_attachments(self.pretext, self.slack_attachment)
 		#Assuming that a RuntimeError is due to improperly configured Slack::Post.
 		rescue RuntimeError => e
 			puts "Couldn't post to Slack: #{e}"
@@ -54,12 +54,26 @@ class ChefSync
 				fallback: @summary,
 				fields: [
 					{
+						title: 'Summary',
+						value: @summary,
+						short: false
+					},
+					{
+						title: 'Changes',
 						value: @log.join("\n"),
 						short: false
 					}
 				]
 			}
 		]
+	end
+
+	def pretext
+		if ENV['CHEFSYNC_CI_BUILD_URL'].nil? or ENV['CHEFSYNC_COMMIT_URL'].nil?
+			return "chef-sync run triggered."
+		else
+			return "<#{ENV['CHEFSYNC_CI_BUILD_URL']}|CI build> triggered by <#{ENV['CHEFSYNC_COMMIT_URL']}|commit>."
+		end
 	end
 
 end

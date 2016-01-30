@@ -29,8 +29,12 @@ variable. You can optionally also set `CHEFSYNC_SLACK_USERNAME` to set the
 username you'd like to post to Slack under, and `CHEFSYNC_SLACK_CHANNEL` to set 
 the Slack channel.
 
+You can also optionally set `CHEFSYNC_CI_BUILD_URL` and `CHEFSYNC_COMMIT_URL` 
+environment variables. If you set both, they will appear as links in the Slack 
+post's pretext above the results of the sync.
+
 To configure Knife/Ridley, you must have a `.chef` directory in your PATH that 
-contains both `.knife.rb` and `[chef-server-username].rb` config files.
+contains a `.knife.rb` config file.
 
 ## Usage
 
