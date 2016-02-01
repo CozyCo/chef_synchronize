@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'chef_sync/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = "chef-sync"
+  spec.name          = "chef-synchronize"
   spec.version       = ChefSync::VERSION
   spec.authors       = ["Rachel King"]
   spec.email         = ["opensource@cozy.co"]
