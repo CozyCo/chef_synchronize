@@ -14,7 +14,7 @@ describe 'ChefSync' do
 			summ << "#{r.changes.count}/#{r.total_resources} #{r.resource_type}s have changed. "
 		end
 
-		expect(ChefSync.new.run).to eq([summ, []])
+		expect(ChefSync.new.run).to eq([summ, [ChefSync::DEFAULT_LOG_MESSAGE]])
 	end
 
 	it 'has log entries when there is a change' do

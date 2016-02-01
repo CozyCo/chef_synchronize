@@ -13,6 +13,7 @@ class ChefSync
 	RESOURCE_TYPES = [Role, Environment, DataBagItem, Cookbook]
 
 	DRYRUN_MESSAGE = "This was a dry run. Nothing has been updated on the chef server. "
+	DEFAULT_LOG_MESSAGE = "There were no changes."
 
 	def initialize(slack=false,dryrun=true)
 		@slack = slack
@@ -29,6 +30,8 @@ class ChefSync
 			@summary << "#{responses.count}/#{resource.total_resources} #{resource.resource_type}s have changed. "
 			@log += responses
 		end
+
+		@log << DEFAULT_LOG_MESSAGE if @log.empty?
 
 		self.post_to_slack if @slack
 		return @summary, @log
