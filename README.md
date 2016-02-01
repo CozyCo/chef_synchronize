@@ -8,7 +8,7 @@ without actually modifying anything on the chef server.
 Add this line to your chef repo's Gemfile:
 
 ```ruby
-gem 'chef-sync'
+gem 'chef-synchronize'
 ```
 
 And then execute:
@@ -17,11 +17,11 @@ And then execute:
 
 Or install it yourself as:
 
-	$ gem install chef_sync
+	$ gem install chef-synchronize
 
 ## Configuration
 
-`chef-sync` requires configuration to post to Slack (only required if you want
+`chef-synchronize` requires configuration to post to Slack (only required if you want
 to post to Slack) and to communicate with the Chef server via Knife and Ridley.
 
 To configure Slack, you must set the `CHEFSYNC_SLACK_WEBHOOK_URL` environment 
