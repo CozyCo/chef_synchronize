@@ -22,10 +22,10 @@ Gem::Specification.new do |spec|
 
   spec.add_development_dependency "bundler", "~> 1.6"
   spec.add_development_dependency "rake", "~> 10.0"
-  spec.add_development_dependency "rspec"
+  spec.add_development_dependency "rspec", "~> 3.4"
 
-  spec.add_runtime_dependency "ridley"
-  spec.add_runtime_dependency "knife-api"
-  spec.add_runtime_dependency "slack-post"
-  spec.add_runtime_dependency "tqdm"
+  spec.add_dependency "ridley", "~> 4.4"
+  spec.add_dependency "knife-api", "~> 0.1"
+  spec.add_dependency "slack-post", "~> 0.3"
+  spec.add_dependency "tqdm", "~> 0.3"
 end
