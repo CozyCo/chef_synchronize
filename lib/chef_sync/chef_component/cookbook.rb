@@ -3,7 +3,7 @@ require 'ridley'
 
 Ridley::Logging.logger.level = Logger.const_get('ERROR')
 
-class ChefSync::Cookbook < ChefSync::ChefResource
+class ChefSync::Cookbook < ChefSync::ChefComponent
 
 	CHANGE_LOG_SUMMARIES = {
 		:create => " was created.",

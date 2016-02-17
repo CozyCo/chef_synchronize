@@ -22,7 +22,7 @@ class ChefSync
 	end
 
 
-	class ChefResourceMock < ChefResource
+	class ChefComponentMock < ChefComponent
 
 		@resource_type = 'fake_resource'
 

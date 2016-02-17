@@ -1,5 +1,5 @@
 require_relative '../../spec_helper'
-require_relative '../chef_resource_shared_behaviors'
+require_relative '../chef_component_shared_behaviors'
 
 describe 'ChefSync::Role' do
 

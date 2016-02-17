@@ -7,20 +7,20 @@ class ChefSync
 		#Need to extend Chef::Knife::API in this class because knife_capture is top-level.
 		extend Chef::Knife::API
 
-		attr_reader :chef_resource
+		attr_reader :chef_component
 		attr_reader :list_command
 		attr_reader :show_command
 		attr_reader :upload_command
 
-		def initialize(chef_resource, mode)
-			@chef_resource = chef_resource
-			@list_command = "#{chef_resource}_list".to_sym
-			@show_command = "#{chef_resource}_show".to_sym
+		def initialize(chef_component, mode)
+			@chef_component = chef_component
+			@list_command = "#{chef_component}_list".to_sym
+			@show_command = "#{chef_component}_show".to_sym
 
-			if chef_resource == 'cookbook'
-				@upload_command = "#{chef_resource}_upload".to_sym
+			if chef_component == 'cookbook'
+				@upload_command = "#{chef_component}_upload".to_sym
 			else
-				@upload_command = "#{chef_resource}_from_file".to_sym
+				@upload_command = "#{chef_component}_from_file".to_sym
 			end
 
 			@mode = mode
@@ -90,7 +90,7 @@ class ChefSync
 
 		def list(*args)
 			parsed_output = self.capture_output(self.list_command, args)
-			if self.chef_resource == 'cookbook'
+			if self.chef_component == 'cookbook'
 				parsed_output = self.format_cookbook_list_output(parsed_output)
 			end
 			return parsed_output

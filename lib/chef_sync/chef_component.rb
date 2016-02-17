@@ -1,7 +1,7 @@
 require 'tqdm'
 
 class ChefSync
-	class ChefResource
+	class ChefComponent
 
 		CHANGE_LOG_SUMMARIES = {
 			:create => " was created.",

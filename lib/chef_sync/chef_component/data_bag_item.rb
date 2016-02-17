@@ -1,4 +1,4 @@
-class ChefSync::DataBagItem < ChefSync::ChefResource
+class ChefSync::DataBagItem < ChefSync::ChefComponent
 
 	@resource_type = 'data_bag'
 

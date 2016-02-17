@@ -3,11 +3,11 @@ require 'slack/post'
 
 class ChefSync
 
-	require 'chef_sync/chef_resource'
-	require 'chef_sync/chef_resource/cookbook'
-	require 'chef_sync/chef_resource/data_bag_item'
-	require 'chef_sync/chef_resource/environment'
-	require 'chef_sync/chef_resource/role'
+	require 'chef_sync/chef_component'
+	require 'chef_sync/chef_component/cookbook'
+	require 'chef_sync/chef_component/data_bag_item'
+	require 'chef_sync/chef_component/environment'
+	require 'chef_sync/chef_component/role'
 	require 'chef_sync/knife'
 
 	RESOURCE_TYPES = [Role, Environment, DataBagItem, Cookbook]
