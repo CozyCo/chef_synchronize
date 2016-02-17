@@ -60,7 +60,7 @@ describe 'ChefSync::Cookbook' do
 
 	context 'when the local version is newer' do
 
-		let(:version_args) { {local_version_number: '0.1.2', remote_version_number: '0.1.0'} }
+		let(:version_args) { {local_version_number: '0.1.10', remote_version_number: '0.1.9'} }
 
 		it 'needs to be updated' do
 			cb = ChefSync::Cookbook.new(dryrun_args.merge(version_args))
@@ -82,7 +82,7 @@ describe 'ChefSync::Cookbook' do
 
 	context 'when the local version is older' do
 		it 'returns an error message' do
-			version_args = {local_version_number: '0.1.0', remote_version_number: '0.1.2'}
+			version_args = {local_version_number: '0.1.9', remote_version_number: '0.1.10'}
 			cb = ChefSync::Cookbook.new(dryrun_args.merge(version_args))
 			expect(cb).to receive(:upload_resource).never
 

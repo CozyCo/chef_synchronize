@@ -1,5 +1,6 @@
 require 'chef'
 require 'ridley'
+require 'mixlib/versioning'
 
 Ridley::Logging.logger.level = Logger.const_get('ERROR')
 
@@ -22,8 +23,8 @@ class ChefSync::Cookbook < ChefSync::ChefComponent
 	attr_reader :file_change_log
 
 	def initialize(local_version_number:, remote_version_number:, **opts)
-		@local_version_number = local_version_number
-		@remote_version_number = remote_version_number
+		@local_version_number = Mixlib::Versioning.parse(local_version_number)
+		@remote_version_number = Mixlib::Versioning.parse(remote_version_number)
 		@file_change_log = {}
 
 		super(opts)

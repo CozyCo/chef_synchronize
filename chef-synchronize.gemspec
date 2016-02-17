@@ -28,4 +28,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency "knife-api", "~> 0.1"
   spec.add_dependency "slack-post", "~> 0.3"
   spec.add_dependency "tqdm", "~> 0.3"
+  spec.add_dependency "mixlib-versioning", "~> 1.1"
 end
