@@ -1,7 +1,6 @@
 # ChefSync
 
-Sync a monolithic chef repo to a chef server. Currently only prints out changes
-without actually modifying anything on the chef server.
+Sync a monolithic chef repo to a chef server.
 
 ## Installation
 
