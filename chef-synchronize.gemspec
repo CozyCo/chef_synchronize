@@ -6,11 +6,11 @@ require 'chef_sync/version'
 Gem::Specification.new do |spec|
   spec.name          = "chef-synchronize"
   spec.version       = ChefSync::VERSION
-  spec.authors       = ["Rachel King"]
+  spec.authors       = ["Cozy Services Ltd.", "Rachel King"]
   spec.email         = ["opensource@cozy.co"]
   spec.summary       = %q{Sync a monolithic chef repo to a chef server.}
   spec.description   = %q{Sync a monolithic chef repo to a chef server.}
-  spec.homepage      = ""
+  spec.homepage      = "https://github.com/CozyCo/chef-synchronize"
   spec.license       = "MIT"
 
   spec.files         = Dir[ '{lib,spec}/**/*.rb' ] +
