@@ -4,13 +4,13 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'chef_sync/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = "chef-synchronize"
+  spec.name          = "chef_synchronize"
   spec.version       = ChefSync::VERSION
   spec.authors       = ["Cozy Services Ltd.", "Rachel King"]
   spec.email         = ["opensource@cozy.co"]
   spec.summary       = %q{Sync a monolithic chef repo to a chef server.}
   spec.description   = %q{Sync a monolithic chef repo to a chef server.}
-  spec.homepage      = "https://github.com/CozyCo/chef-synchronize"
+  spec.homepage      = "https://github.com/CozyCo/chef_synchronize"
   spec.license       = "MIT"
 
   spec.files         = Dir[ '{lib,spec}/**/*.rb' ] +

@@ -7,7 +7,7 @@ Sync a monolithic chef repo to a chef server.
 Add this line to your chef repo's Gemfile:
 
 ```ruby
-gem 'chef-synchronize'
+gem 'chef_synchronize'
 ```
 
 And then execute:
@@ -16,11 +16,11 @@ And then execute:
 
 Or install it yourself as:
 
-	$ gem install chef-synchronize
+	$ gem install chef_synchronize
 
 ## Configuration
 
-`chef-synchronize` requires configuration to post to Slack (only required if you want
+`chef_synchronize` requires configuration to post to Slack (only required if you want
 to post to Slack) and to communicate with the Chef server via Knife and Ridley.
 
 To configure Slack, you must set the `CHEFSYNC_SLACK_WEBHOOK_URL` environment 
@@ -40,23 +40,23 @@ contains a `.knife.rb` config file.
 From within your chef repo, execute the following line to see a list of
 unsynced changes:
 
-	$ bundle exec chef-sync
+	$ bundle exec chef_sync
 
-By default, `chef-sync` is set to dryrun mode, where `chef-sync` will tell you 
+By default, `chef_sync` is set to dryrun mode, where `chef_sync` will tell you 
 what updates would happen without actually syncing things to the Chef server, 
 and to avoid posting to Slack. The output will be printed to the console
 regardless of whether it's set to post to Slack.
 
-	$ bundle exec chef-sync --help
+	$ bundle exec chef_sync --help
 	# help menu
-	$ bundle exec chef-sync --no-dryrun
-	# runs chef-sync and actually syncs changes to Chef server
-	$ bundle exec chef-sync -p
-	# runs chef-sync and posts output to Slack in addition to in the console
+	$ bundle exec chef_sync --no-dryrun
+	# runs chef_sync and actually syncs changes to Chef server
+	$ bundle exec chef_sync -p
+	# runs chef_sync and posts output to Slack in addition to in the console
 
 ## Contributing
 
-1. Fork it ( https://github.com/[my-github-username]/chef_sync/fork )
+1. Fork it ( https://github.com/[my-github-username]/chef_synchronize/fork )
 2. Install dependencies (`bundle install`)
 3. Create your feature branch (`git checkout -b my-new-feature`)
 4. Make your changes.
